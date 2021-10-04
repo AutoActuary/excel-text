@@ -17,7 +17,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     use_scm_version={
         "write_to": "excel_text/version.py",
     },
@@ -25,6 +25,6 @@ setuptools.setup(
         "setuptools_scm",
     ],
     install_requires=[
-        'locate',
+        "locate",
     ],
 )
