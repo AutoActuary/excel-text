@@ -26,5 +26,6 @@ setuptools.setup(
     ],
     install_requires=[
         "locate",
+        "excel-dates==0.0.2",
     ],
 )
