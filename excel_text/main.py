@@ -1,7 +1,8 @@
 import datetime
 from typing import Any
-import pandas as pd
 import excel_dates
+import collections
+import numpy as np
 
 number_options = set("0#?.,%")
 
@@ -9,18 +10,18 @@ number_options = set("0#?.,%")
 def elapsed(d, units):
     date_zero = excel_dates.ensure_python_datetime(0)
     if hasattr(d, "hour"):
-        elapsed = (d - date_zero).days * 24 + d.hour
+        delta_time = (d - date_zero).days * 24 + d.hour
         if units == "m":
-            elapsed = elapsed * 60 + d.minute
+            delta_time = delta_time * 60 + d.minute
         elif units == "s":
-            elapsed = (elapsed * 60 + d.minute) * 60 + d.second
+            delta_time = (delta_time * 60 + d.minute) * 60 + d.second
     else:
-        elapsed = (d - date_zero).days * 24
+        delta_time = (d - date_zero).days * 24
         if units == "m":
-            elapsed *= 60
+            delta_time *= 60
         elif units == "s":
-            elapsed *= 60 * 60
-    return int(elapsed)
+            delta_time *= 60 * 60
+    return int(delta_time)
 
 
 FORMAT_DATETIME_CONVERSIONS = {
@@ -119,8 +120,6 @@ class Types:
     NUMBER = 4
 
 
-import collections
-
 Element = collections.namedtuple("Element", "position code next_code char")
 
 
@@ -128,7 +127,6 @@ def check_duplicates(element, stream):
     elements = [element]
     while elements[-1].next_code == elements[-1].code:
         elements.append(next(stream))
-    print(elements)
     return "".join(e.code for e in elements)
 
 
@@ -146,18 +144,13 @@ def check_am_pm(element, stream, fmt):
     return None
 
 
-def format_value(format_str, format_value):
+def format_value(format_str, fmt_value):
     """Format datetime using a single token from a custom format"""
-    # try:
-    print("format string to lookup", format_str)
-    print(FORMAT_DATETIME_CONVERSION_LOOKUP[format_str[0]](format_str)(format_value))
-    return FORMAT_DATETIME_CONVERSION_LOOKUP[format_str[0]](format_str)(format_value)
-    # except (KeyError, ValueError, AttributeError):
-    #     return VALUE_ERROR
+
+    return FORMAT_DATETIME_CONVERSION_LOOKUP[format_str[0]](format_str)(fmt_value)
 
 
 def convert_format(fmt):
-    print(fmt)
     last_date = None
     test_arr = []
     stream = iter(
@@ -166,7 +159,6 @@ def convert_format(fmt):
     )
     for char in stream:
 
-        print(char.code)
         if char.code in number_options and not (
             last_date
             and (
@@ -182,18 +174,16 @@ def convert_format(fmt):
             code = check_duplicates(char, stream)
 
             test_arr.append([f"[{code[0]}]", Types.DATETIME])
-            char = next(stream)
-            char = next(stream)
+            next(stream)
 
             last_date = test_arr[-1], len(test_arr)
 
-        if char.code in FORMAT_DATETIME_CONVERSION_LOOKUP:
+        elif char.code in FORMAT_DATETIME_CONVERSION_LOOKUP:
             am_pm = check_am_pm(char, stream, fmt)
             if am_pm:
                 test_arr.append([am_pm, Types.AM_PM])
             else:
                 code = check_duplicates(char, stream)
-                print("code", code, last_date)
                 if code in {"m", "mm"} and last_date and last_date[0][0][0] in "hs[":
                     # this is minutes not months
                     code = code.upper()
@@ -214,65 +204,74 @@ def convert_format(fmt):
     return test_arr
 
 
-def text(Value: Any, fmt: str) -> str:
-    # print(fmt)
-    # last_date = None
-    # test_arr = []
-    # stream = iter(
-    #     Element(i, *e)
-    #     for i, e in enumerate(zip(fmt.lower(), list(fmt[1:].lower()) + [None], fmt))
-    # )
-    # for char in stream:
-    #
-    #     print(char.code)
-    #     if char.code in number_options and not (
-    #         last_date
-    #         and (
-    #             (last_date[0][0][0] == "s" or last_date[0][0] == "[s]")
-    #             and char.code == "."
-    #             or char.code == ","
-    #         )
-    #     ):
-    #         pass
-    #
-    #     elif char.code == "[" and char.next_code in set("hms"):
-    #         char = next(stream)
-    #         code = check_duplicates(char, stream)
-    #
-    #         test_arr.append([f"[{code[0]}]", Types.DATETIME])
-    #         char = next(stream)
-    #         char = next(stream)
-    #
-    #         last_date = test_arr[-1], len(test_arr)
-    #
-    #     if char.code in FORMAT_DATETIME_CONVERSION_LOOKUP:
-    #         am_pm = check_am_pm(char, stream, fmt)
-    #         if am_pm:
-    #             test_arr.append([am_pm, Types.AM_PM])
-    #         else:
-    #             code = check_duplicates(char, stream)
-    #             print("code", code, last_date)
-    #             if code in {"m", "mm"} and last_date and last_date[0][0][0] in "hs[":
-    #                 # this is minutes not months
-    #                 code = code.upper()
-    #
-    #             elif code[0] == "s" and last_date and last_date[0][0] in {"m", "mm"}:
-    #                 # the previous minutes not months
-    #                 prev = last_date[1] - 1
-    #                 test_arr[prev] = [test_arr[prev][0].upper(), Types.DATETIME]
-    #
-    #             elif code == "." and char.next_code == "0":
-    #                 # if we are here with '.', then this is subseconds: ss.000
-    #                 code += check_duplicates(next(stream), stream)
-    #             test_arr.append([code, Types.DATETIME])
-    #             last_date = test_arr[-1], len(test_arr)
-    #     else:
-    #         test_arr.append([char.code, Types.STRING])
-    test_arr = convert_format(fmt)
-    print(test_arr)
+def date_time(Value, tokens):
+    value_datetime = excel_dates.ensure_python_datetime(Value)
 
+    chars = np.array(tokens)[:, 0]
+    if ("s" in chars or "ss" in chars) and not (
+        (".0" in chars or ".00" in chars or ".000" in chars)
+    ):
+        if value_datetime.microsecond > 500000:
+            value_datetime = value_datetime + datetime.timedelta(seconds=1)
+        # print(value_datetime.microsecond)
+        # value_datetime = value_datetime + datetime.timedelta(seconds=1)
+
+    tokens = tuple(
+        token[0] if token[1] == Types.STRING else format_value(token[0], value_datetime)
+        for token in tokens
+    )
+
+    return "".join(tokens)
+
+
+def text(Value: Any, fmt: str) -> str:
+    """
+    :param Value:
+    :param fmt:
+    :return:
+    >>> text(1224.1234, "d")
+    '8'
+    >>> text(1224.1234, "dd")
+    '08'
+    >>> text(1204.1234, "ddd")
+    'Sat'
+    >>> text(1233.1234, "dddd")
+    'Sunday'
+    >>> text(1231.1234, "YYYY")
+    '1903'
+    >>> text(1234.1234, "yy/m/d")
+    '03/5/18'
+    >>> text(1234.1234, "yyyy/mmmmm")
+    '1903/M'
+    >>> text(1294.1234, "yyyy mmmm")
+    '1903 July'
+    >>> text(1264.1234, "yyyy mmm")  # 3 letters only
+    '1903 Jun'
+    >>> text(1234.1234, "yyyy/mm")
+    '1903/05'
+    >>> text(1234.1234, "yyyy/m")
+    '1903/5'
+    >>> text(1234.1234, "yyyy/mm/dd hh:mm:ss")
+    '1903/05/18 02:57:42'
+
+    >>> text(1234.8765, "yyyy/mm/dd hh:mm:ss")  # test rounding
+    '1903/05/18 21:02:10'
+
+    >>> text(1234.8765, "yyyy/mm/dd hh:mm:ss AM/PM")  # test rounding
+    '1903/05/18 09:02:10 PM'
+    >>> text(1234.8765, "yyyy/mm/dd hh:mm:ss.00")
+    '1903/05/18 21:02:09.60'
+
+    >>> text(1234.8766998, "yyyy/mm/dd hh:mm:ss.0")  # test rounding
+    '1903/05/18 21:02:26.9'
+
+    >>> text(1234.5432, "hh:[mm]:ss")
+    '13:1777742:12'
+
+    """
+
+    test_arr = convert_format(fmt)
     types = [token[1] for token in test_arr]
-    print(types)
     tokens = [t for t in test_arr]
     if Types.AM_PM in types:  # convert to 12 hour time if AM/PM included
         tokens = [
@@ -280,28 +279,12 @@ def text(Value: Any, fmt: str) -> str:
         ]
         types.remove(Types.AM_PM)
         types.append(Types.DATETIME)
-        print("toekn", tokens)
 
-    if True:
-        value_datetime = excel_dates.ensure_python_datetime(Value)
+    if Types.DATETIME in types:
 
-        tokens = tuple(
-            token[0]
-            if token[1] == Types.STRING
-            else format_value(token[0], value_datetime)
-            for token in tokens
-        )
-
-        print(tokens)
-        return "".join(tokens)
+        return date_time(Value, tokens)
+    elif Types.NUMBER in types:
+        pass
 
 
-print(text(1234.5432, "[hh]:[mm]:[ss] A/p"))
-
-xyz = excel_dates.ensure_python_datetime(1234.5432)
-
-print(xyz)
-
-x = datetime.datetime.now()
-y = datetime.datetime.fromtimestamp(0)
-print(xyz)
+print(text(1224.1234, "yy/mm/dd hh:[mm]:ss A/p"))
