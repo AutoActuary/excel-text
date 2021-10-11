@@ -2,13 +2,18 @@ import datetime
 from typing import Any
 import excel_dates
 import collections
+import itertools as it
 import numpy as np
 
 number_options = set("0#?.,%")
+placeholders = set("#0?")
+NUMBER_TOKEN_MATCH = {"#": None, "0": "0", "?": "0"}
+DIGITS = set("0123456789")
 
 
 def elapsed(d, units):
-    date_zero = excel_dates.ensure_python_datetime(0)
+    date_zero = datetime.datetime(1899, 12, 30, 0, 0, 0)
+
     if hasattr(d, "hour"):
         delta_time = (d - date_zero).days * 24 + d.hour
         if units == "m":
@@ -66,41 +71,15 @@ def FORMAT_DATETIME_CONVERSION_LOOKUP(FORMAT_DATETIME_CONVERSIONS):
             {1: "yy", 2: "yy"}.get(len(code), "yyyy")
         ],
         "m": lambda code: FORMAT_DATETIME_CONVERSIONS[
-            {
-                1: "m",
-                2: "mm",
-                3: "mmm",
-                4: "mmmm",
-                5: "mmmmm",
-            }.get(len(code), "mmmm")
+            {1: "m", 2: "mm", 3: "mmm", 4: "mmmm", 5: "mmmmm",}.get(len(code), "mmmm")
         ],
         "d": lambda code: FORMAT_DATETIME_CONVERSIONS[
-            {
-                1: "d",
-                2: "dd",
-                3: "ddd",
-            }.get(len(code), "dddd")
+            {1: "d", 2: "dd", 3: "ddd",}.get(len(code), "dddd")
         ],
-        "h": lambda code: FORMAT_DATETIME_CONVERSIONS[
-            {
-                1: "h",
-            }.get(len(code), "hh")
-        ],
-        "H": lambda code: FORMAT_DATETIME_CONVERSIONS[
-            {
-                1: "H",
-            }.get(len(code), "HH")
-        ],
-        "M": lambda code: FORMAT_DATETIME_CONVERSIONS[
-            {
-                1: "M",
-            }.get(len(code), "MM")
-        ],
-        "s": lambda code: FORMAT_DATETIME_CONVERSIONS[
-            {
-                1: "s",
-            }.get(len(code), "ss")
-        ],
+        "h": lambda code: FORMAT_DATETIME_CONVERSIONS[{1: "h",}.get(len(code), "hh")],
+        "H": lambda code: FORMAT_DATETIME_CONVERSIONS[{1: "H",}.get(len(code), "HH")],
+        "M": lambda code: FORMAT_DATETIME_CONVERSIONS[{1: "M",}.get(len(code), "MM")],
+        "s": lambda code: FORMAT_DATETIME_CONVERSIONS[{1: "s",}.get(len(code), "ss")],
         ".": lambda code: FORMAT_DATETIME_CONVERSIONS[code],
         "a": lambda code: FORMAT_DATETIME_CONVERSIONS[code],
         "A": lambda code: FORMAT_DATETIME_CONVERSIONS[code],
@@ -153,6 +132,10 @@ def format_value(format_str, fmt_value):
 def convert_format(fmt):
     last_date = None
     test_arr = []
+    have_decimal = False
+    have_thousands = False
+    percents = 0
+
     stream = iter(
         Element(i, *e)
         for i, e in enumerate(zip(fmt.lower(), list(fmt[1:].lower()) + [None], fmt))
@@ -167,7 +150,43 @@ def convert_format(fmt):
                 or char.code == ","
             )
         ):
-            pass
+            # pass
+            need_emit = True
+            if char.code == ",":
+                need_emit = False
+                if (
+                    have_decimal
+                    or have_thousands
+                    or char.position == 0
+                    or char.next_code is None
+                    or fmt[char.position - 1] not in placeholders
+                    or fmt[char.position + 1] not in placeholders
+                ):
+                    # just a regular comma, not 1000's indicator
+                    if char.position == 0 or (
+                        fmt[char.position - 1] not in placeholders
+                    ):
+                        test_arr.append([char.code, Types.STRING])
+                else:
+                    have_thousands = True
+
+            elif char.code == ".":
+                if have_decimal:
+                    need_emit = False
+                    test_arr.append([char.code, Types.STRING])
+
+                else:
+                    have_decimal = True
+
+            elif char.code == "%":
+                percents += 1
+                need_emit = False
+                test_arr.append([char.code, Types.STRING])
+
+            if need_emit:
+                code = check_duplicates(char, stream)
+
+                test_arr.append([code, Types.NUMBER])
 
         elif char.code == "[" and char.next_code in set("hms"):
             char = next(stream)
@@ -199,9 +218,9 @@ def convert_format(fmt):
                 test_arr.append([code, Types.DATETIME])
                 last_date = test_arr[-1], len(test_arr)
         else:
-            test_arr.append([char.code, Types.STRING])
+            test_arr.append([char.char, Types.STRING])
 
-    return test_arr
+    return test_arr, have_decimal, have_thousands, percents
 
 
 def date_time(Value, tokens):
@@ -213,8 +232,6 @@ def date_time(Value, tokens):
     ):
         if value_datetime.microsecond > 500000:
             value_datetime = value_datetime + datetime.timedelta(seconds=1)
-        # print(value_datetime.microsecond)
-        # value_datetime = value_datetime + datetime.timedelta(seconds=1)
 
     tokens = tuple(
         token[0] if token[1] == Types.STRING else format_value(token[0], value_datetime)
@@ -222,6 +239,70 @@ def date_time(Value, tokens):
     )
 
     return "".join(tokens)
+
+
+def number_function(Value, tokens, have_decimal, have_thousands, percents):
+    Value *= 100 ** percents
+    number_format = "".join(t[0] for t in tokens if t[1] == Types.NUMBER)
+
+    thousands = "," if have_thousands else ""
+
+    if have_decimal:
+        left_num_format, right_num_format = number_format.split(".", 1)
+        decimals = len(right_num_format)
+        left_side, right_side = f"{Value:#{thousands}.{decimals}f}".split(".")
+        right_side = right_side.rstrip("0")
+    else:
+        left_side = f"{int(round(Value, 0)):{thousands}}"
+        right_side = None
+    left_side = left_side.lstrip("0")
+
+    tokens_iter = iter(t for t in tokens)
+
+    left_side_tokens = []
+    right_side_tokens = []
+    decimal_check = False
+    for x in tokens_iter:
+        if x[0] == ".":
+            decimal_check = True
+        elif decimal_check:
+            right_side_tokens.append(x)
+        else:
+            left_side_tokens.append(x)
+
+    left = tuple(_number_token_converter(left_side_tokens, left_side, left_side=True))
+
+    if have_decimal:
+        right_side = "".join(_number_token_converter(right_side_tokens, right_side))
+        return f'{"".join(str(v) for v in left[::-1]) }.{right_side}'
+    else:
+        return "".join(str(v) for v in left[::-1])
+    # return "test"
+
+
+def _number_token_converter(tokens, number, left_side=False):
+
+    digits_iter = iter(number[::-1] if left_side else number)
+    result = []
+    filler = []
+    for token in tokens[::-1] if left_side else tokens:
+        if token[1] == Types.STRING:
+            filler.extend(iter(token[0]))
+
+        else:
+            result.extend(filler)
+            filler = []
+            for i in range(len(token[0])):
+                c = next(digits_iter, NUMBER_TOKEN_MATCH[token[0][0]])
+                if c is not None:
+                    result.append(c)
+                    if c not in DIGITS:
+                        c = next(digits_iter, NUMBER_TOKEN_MATCH[token[0][0]])
+                        if c is not None:  # pragma: no cover
+                            result.append(c)
+    result.extend(digits_iter)
+    result.extend(filler)
+    return result
 
 
 def text(Value: Any, fmt: str) -> str:
@@ -253,24 +334,41 @@ def text(Value: Any, fmt: str) -> str:
     '1903/5'
     >>> text(1234.1234, "yyyy/mm/dd hh:mm:ss")
     '1903/05/18 02:57:42'
-
     >>> text(1234.8765, "yyyy/mm/dd hh:mm:ss")  # test rounding
     '1903/05/18 21:02:10'
-
     >>> text(1234.8765, "yyyy/mm/dd hh:mm:ss AM/PM")  # test rounding
     '1903/05/18 09:02:10 PM'
     >>> text(1234.8765, "yyyy/mm/dd hh:mm:ss.00")
     '1903/05/18 21:02:09.60'
-
     >>> text(1234.8766998, "yyyy/mm/dd hh:mm:ss.0")  # test rounding
     '1903/05/18 21:02:26.9'
-
     >>> text(1234.5432, "hh:[mm]:ss")
     '13:1777742:12'
 
+    >>> text(1234.1239, "$#,##0.000")
+    '$1,234.124'
+    >>> text(1234, "R#,##0.0")
+    'R1,234.0'
+    >>> text(1234, "r#,##0.0000")
+    'r1,234.0000'
+    >>> text(234.1239, "$#,##0.000")
+    '$234.124'
+    >>> text(0.1239, "$#,##0.0")
+    '$0.1'
+
+    >>> text(0.2859, "0.0%")
+    '28.6%'
+    >>> text(0.2859, "00.00%")
+    '28.59%'
+    >>> text(0.2859, "000.000%")
+    '028.590%'
+
+    >> text(1234, "0000000")
+    '0001234
     """
 
-    test_arr = convert_format(fmt)
+    test_arr, have_decimal, have_thousands, percents = convert_format(fmt)
+    # print(test_arr)
     types = [token[1] for token in test_arr]
     tokens = [t for t in test_arr]
     if Types.AM_PM in types:  # convert to 12 hour time if AM/PM included
@@ -281,10 +379,7 @@ def text(Value: Any, fmt: str) -> str:
         types.append(Types.DATETIME)
 
     if Types.DATETIME in types:
-
         return date_time(Value, tokens)
     elif Types.NUMBER in types:
+        return number_function(Value, tokens, have_decimal, have_thousands, percents)
         pass
-
-
-print(text(1224.1234, "yy/mm/dd hh:[mm]:ss A/p"))
