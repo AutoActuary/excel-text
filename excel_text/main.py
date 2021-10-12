@@ -4,6 +4,7 @@ import excel_dates
 import collections
 import itertools as it
 import numpy as np
+import pandas as pd
 
 number_options = set("0#?.,%")
 placeholders = set("#0?")
@@ -135,14 +136,38 @@ def convert_format(fmt):
     have_decimal = False
     have_thousands = False
     percents = 0
-
+    characters = pd.DataFrame(columns=["code", "next_code", "character"])
     stream = iter(
         Element(i, *e)
         for i, e in enumerate(zip(fmt.lower(), list(fmt[1:].lower()) + [None], fmt))
     )
+    # fmt_next = list(fmt[1:].lower()) + [None]
+    # print(fmt_next)
+    # for counter in range(len(fmt)):
+    #     characters.loc[len(characters)] = [
+    #         fmt[counter].lower(),
+    #         fmt_next[counter],
+    #         fmt[counter],
+    #     ]
+    #
+    # print(characters)
     for char in stream:
+        # print(char)
+        # print(test_arr)
+        if char.code == '"':
+            word = char.code
 
-        if char.code in number_options and not (
+            while char.next_code != '"':
+                # print("loop", char.next_code)
+                char = next(stream)
+
+                word += char.code
+                # test_arr.append([char.code, Types.STRING])
+            word = word.strip('"')
+            test_arr.append([word, Types.STRING])
+            next(stream)
+
+        elif char.code in number_options and not (
             last_date
             and (
                 (last_date[0][0][0] == "s" or last_date[0][0] == "[s]")
@@ -220,6 +245,7 @@ def convert_format(fmt):
         else:
             test_arr.append([char.char, Types.STRING])
 
+    # print(test_arr)
     return test_arr, have_decimal, have_thousands, percents
 
 
@@ -356,6 +382,9 @@ def text(Value: Any, fmt: str) -> str:
     >>> text(0.1239, "$#,##0.0")
     '$0.1'
 
+    >>> text(1234.1239, '"m"#,##0.0')
+    'm1,234.1'
+
     >>> text(0.2859, "0.0%")
     '28.6%'
     >>> text(0.2859, "00.00%")
@@ -393,3 +422,7 @@ def text(Value: Any, fmt: str) -> str:
     elif Types.NUMBER in types:
         return number_function(Value, tokens, have_decimal, have_thousands, percents)
         pass
+
+
+# print(text(1234.1239, '"m"#,##0.0'))
+convert_format("MM/DD/YY")
