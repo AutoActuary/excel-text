@@ -100,28 +100,31 @@ class Types:
     NUMBER = 4
 
 
-Element = collections.namedtuple("Element", "position code next_code char")
+# Element = collections.namedtuple("Element", "position code next_code char")
 
 
-def check_duplicates(element, stream):
-    elements = [element]
-    while elements[-1].next_code == elements[-1].code:
-        elements.append(next(stream))
-    return "".join(e.code for e in elements)
+def check_duplicates(element, characters):
+    elements = pd.DataFrame(columns=["position", "code", "next_code", "char"])
+    elements.loc[0] = list(element)
+
+    while elements.iloc[-1].next_code == elements.iloc[-1].code:
+        elements.loc[len(elements)] = next(characters)
+
+    return "".join(e for e in elements.code.values)
 
 
-def check_am_pm(element, stream, fmt):
+def check_am_pm(element, characters, fmt):
     if element.code == "a" and element.next_code in "m/":
         if element.next_code == "m":
             to_match = "am/pm"
         else:
             to_match = "a/p"
-        matched = fmt[element.position : element.position + len(to_match)]
+        matched = fmt[element.Index : element.Index + len(to_match)]
         if matched.lower() == to_match:
             for i in range(len(to_match) - 1):
-                next(stream)
+                next(characters)
             return matched if to_match == "a/p" else to_match
-    return None
+    # return None
 
 
 def format_value(format_str, fmt_value):
@@ -131,46 +134,48 @@ def format_value(format_str, fmt_value):
 
 
 def convert_format(fmt):
-    last_date = None
-    test_arr = []
+    last_date_token = None
+    # test_arr = []
+
     have_decimal = False
     have_thousands = False
     percents = 0
     characters = pd.DataFrame(columns=["code", "next_code", "character"])
-    stream = iter(
-        Element(i, *e)
-        for i, e in enumerate(zip(fmt.lower(), list(fmt[1:].lower()) + [None], fmt))
-    )
-    # fmt_next = list(fmt[1:].lower()) + [None]
-    # print(fmt_next)
-    # for counter in range(len(fmt)):
-    #     characters.loc[len(characters)] = [
-    #         fmt[counter].lower(),
-    #         fmt_next[counter],
-    #         fmt[counter],
-    #     ]
-    #
-    # print(characters)
-    for char in stream:
-        # print(char)
-        # print(test_arr)
+    tokens = pd.DataFrame(columns=["token", "token_type"])
+    # stream = iter(
+    #     Element(i, *e)
+    #     for i, e in enumerate(zip(fmt.lower(), list(fmt[1:].lower()) + [None], fmt))
+    # )
+    fmt_next = list(fmt[1:].lower()) + [None]
+    for counter in range(len(fmt)):
+        characters.loc[len(characters)] = [
+            fmt[counter].lower(),
+            fmt_next[counter],
+            fmt[counter],
+        ]
+
+    characters = characters.itertuples()
+    for char in characters:
+
         if char.code == '"':
             word = char.code
 
             while char.next_code != '"':
-                # print("loop", char.next_code)
-                char = next(stream)
+                char = next(characters)
 
                 word += char.code
                 # test_arr.append([char.code, Types.STRING])
             word = word.strip('"')
-            test_arr.append([word, Types.STRING])
-            next(stream)
+            # test_arr.append([word, Types.STRING])
+            tokens.loc[len(tokens)] = [word, Types.STRING]
+            next(characters)
+            # next(stream)
 
         elif char.code in number_options and not (
-            last_date
+            last_date_token
+            # last_date_token = tokens.iloc[-1].token
             and (
-                (last_date[0][0][0] == "s" or last_date[0][0] == "[s]")
+                (last_date_token[0] == "s" or last_date_token == "[s]")
                 and char.code == "."
                 or char.code == ","
             )
@@ -182,23 +187,24 @@ def convert_format(fmt):
                 if (
                     have_decimal
                     or have_thousands
-                    or char.position == 0
+                    or char.Index == 0
                     or char.next_code is None
-                    or fmt[char.position - 1] not in placeholders
-                    or fmt[char.position + 1] not in placeholders
+                    or fmt[char.Index - 1] not in placeholders
+                    or fmt[char.Index + 1] not in placeholders
                 ):
                     # just a regular comma, not 1000's indicator
-                    if char.position == 0 or (
-                        fmt[char.position - 1] not in placeholders
-                    ):
-                        test_arr.append([char.code, Types.STRING])
+                    if char.Index == 0 or (fmt[char.Index - 1] not in placeholders):
+                        # test_arr.append([char.code, Types.STRING])
+                        tokens.loc[len(tokens)] = [char.code, Types.STRING]
+
                 else:
                     have_thousands = True
 
             elif char.code == ".":
                 if have_decimal:
                     need_emit = False
-                    test_arr.append([char.code, Types.STRING])
+                    # test_arr.append([char.code, Types.STRING])
+                    tokens.loc[len(tokens)] = [char.code, Types.STRING]
 
                 else:
                     have_decimal = True
@@ -206,128 +212,164 @@ def convert_format(fmt):
             elif char.code == "%":
                 percents += 1
                 need_emit = False
-                test_arr.append([char.code, Types.STRING])
+                # test_arr.append([char.code, Types.STRING])
+                tokens.loc[len(tokens)] = [char.code, Types.STRING]
 
             if need_emit:
-                code = check_duplicates(char, stream)
+                code = check_duplicates(char, characters)
 
-                test_arr.append([code, Types.NUMBER])
+                # test_arr.append([code, Types.NUMBER])
+                tokens.loc[len(tokens)] = [code, Types.NUMBER]
+
+                # tokens.loc[len(tokens)] = [code, Types.NUMBER]
 
         elif char.code == "[" and char.next_code in set("hms"):
-            char = next(stream)
-            code = check_duplicates(char, stream)
+            char = next(characters)
 
-            test_arr.append([f"[{code[0]}]", Types.DATETIME])
-            next(stream)
+            code = check_duplicates(char, characters)
 
-            last_date = test_arr[-1], len(test_arr)
+            tokens.loc[len(tokens)] = [f"[{code[0]}]", Types.DATETIME]
+
+            # test_arr.append([f"[{code[0]}]", Types.DATETIME])
+            next(characters)
+
+            # last_date = test_arr[-1], len(test_arr)
+
+            last_date_token = tokens.iloc[-1].token
 
         elif char.code in FORMAT_DATETIME_CONVERSION_LOOKUP:
-            am_pm = check_am_pm(char, stream, fmt)
+            am_pm = check_am_pm(char, characters, fmt)
             if am_pm:
-                test_arr.append([am_pm, Types.AM_PM])
+                # test_arr.append([am_pm, Types.AM_PM])
+                tokens.loc[len(tokens)] = [am_pm, Types.AM_PM]
+
             else:
-                code = check_duplicates(char, stream)
-                if code in {"m", "mm"} and last_date and last_date[0][0][0] in "hs[":
+                code = check_duplicates(char, characters)
+                if (
+                    code in {"m", "mm"}
+                    and last_date_token
+                    and last_date_token[0] in "hs["
+                ):
                     # this is minutes not months
                     code = code.upper()
 
-                elif code[0] == "s" and last_date and last_date[0][0] in {"m", "mm"}:
+                elif (
+                    code[0] == "s"
+                    and last_date_token
+                    and last_date_token in {"m", "mm"}
+                ):
                     # the previous minutes not months
-                    prev = last_date[1] - 1
-                    test_arr[prev] = [test_arr[prev][0].upper(), Types.DATETIME]
+                    # prev = last_date_token[1] - 1
+                    # test_arr[prev] = [test_arr[prev][0].upper(), Types.DATETIME]
+                    tokens.loc[len(tokens) - 1] = [
+                        tokens.loc[len(tokens) - 1].token.str.upper(),
+                        Types.DATETIME,
+                    ]
 
                 elif code == "." and char.next_code == "0":
                     # if we are here with '.', then this is subseconds: ss.000
-                    code += check_duplicates(next(stream), stream)
-                test_arr.append([code, Types.DATETIME])
-                last_date = test_arr[-1], len(test_arr)
-        else:
-            test_arr.append([char.char, Types.STRING])
+                    # code += check_duplicates(next(stream), stream)
+                    code_next = next(characters)
+                    code += check_duplicates(code_next, characters)
 
-    # print(test_arr)
-    return test_arr, have_decimal, have_thousands, percents
+                # test_arr.append([code, Types.DATETIME])
+                tokens.loc[len(tokens)] = [code, Types.DATETIME]
+
+                last_date_token = tokens.iloc[-1].token
+        else:
+            # test_arr.append([char.char, Types.STRING])
+            tokens.loc[len(tokens)] = [char.character, Types.STRING]
+            pass
+
+    return tokens, have_decimal, have_thousands, percents
 
 
 def date_time(Value, tokens):
     value_datetime = excel_dates.ensure_python_datetime(Value)
 
-    chars = np.array(tokens)[:, 0]
+    chars = tokens.token.values
     if ("s" in chars or "ss" in chars) and not (
         (".0" in chars or ".00" in chars or ".000" in chars)
     ):
         if value_datetime.microsecond > 500000:
             value_datetime = value_datetime + datetime.timedelta(seconds=1)
 
-    tokens = tuple(
-        token[0] if token[1] == Types.STRING else format_value(token[0], value_datetime)
-        for token in tokens
-    )
+    for index, row in tokens.iterrows():
+        if row.token_type != Types.STRING:
+            tokens.loc[index] = format_value(row.token, value_datetime)
 
-    return "".join(tokens)
+    # tokens = tuple(
+    #     token[0] if token[1] == Types.STRING else format_value(token[0], value_datetime)
+    #     for token in tokens
+    # )
+
+    return "".join(tokens.token.values)
 
 
 def number_function(Value, tokens, have_decimal, have_thousands, percents):
     Value *= 100 ** percents
-    number_format = "".join(t[0] for t in tokens if t[1] == Types.NUMBER)
-
+    # number_format = "".join(t[0] for t in tokens if t[1] == Types.NUMBER)
+    number_format = "".join(tokens[tokens.token_type == Types.NUMBER].token.values)
     thousands = "," if have_thousands else ""
 
     if have_decimal:
         left_num_format, right_num_format = number_format.split(".", 1)
         decimals = len(right_num_format)
-        left_side, right_side = f"{Value:#{thousands}.{decimals}f}".split(".")
-        right_side = right_side.rstrip("0")
+        Value_left_side, Value_right_side = f"{Value:#{thousands}.{decimals}f}".split(
+            "."
+        )
+        Value_right_side = Value_right_side.rstrip("0")
     else:
-        left_side = f"{int(round(Value, 0)):{thousands}}"
-        right_side = None
-    left_side = left_side.lstrip("0")
-
-    tokens_iter = iter(t for t in tokens)
-
-    left_side_tokens = []
-    right_side_tokens = []
-    decimal_check = False
-    for x in tokens_iter:
-        if x[0] == ".":
-            decimal_check = True
-        elif decimal_check:
-            right_side_tokens.append(x)
-        else:
-            left_side_tokens.append(x)
-
-    left = tuple(_number_token_converter(left_side_tokens, left_side, left_side=True))
+        Value_left_side = f"{int(round(Value, 0)):{thousands}}"
+        Value_right_side = None
+    Value_left_side = Value_left_side.lstrip("0")
 
     if have_decimal:
-        right_side = "".join(_number_token_converter(right_side_tokens, right_side))
-        return f'{"".join(str(v) for v in left[::-1]) }.{right_side}'
+        decimal_loc = tokens[tokens.token == "."].index.values[0]
+        left_side_tokens = tokens[tokens.index < decimal_loc]
+        left_side_results = token_to_number_converter(
+            left_side_tokens, Value_left_side, left_side=True
+        )
+        right_side_tokens = tokens[tokens.index > decimal_loc]
+        right_side_results = token_to_number_converter(
+            right_side_tokens, Value_right_side, left_side=False
+        )
+        right_side_results = "".join(str(v) for v in right_side_results)
+        return (
+            f'{"".join(str(v) for v in left_side_results[::-1])}.{right_side_results}'
+        )
+
     else:
-        return "".join(str(v) for v in left[::-1])
-    # return "test"
+        left_side_results = token_to_number_converter(
+            tokens, Value_left_side, left_side=True
+        )
+        return "".join(str(v) for v in left_side_results[::-1])
 
 
-def _number_token_converter(tokens, number, left_side=False):
-
-    digits_iter = iter(number[::-1] if left_side else number)
+def token_to_number_converter(tokens, number, left_side=False):
+    digits_iter = iter(
+        number[::-1] if left_side else number
+    )  # reverse order if left side
     result = []
     filler = []
-    for token in tokens[::-1] if left_side else tokens:
-        if token[1] == Types.STRING:
-            filler.extend(iter(token[0]))
-
+    for token in (
+        tokens.iloc[::-1].itertuples() if left_side else tokens.itertuples()
+    ):  # reverse order if left side
+        if token.token_type == Types.STRING:
+            filler.append(token.token)
         else:
-            result.extend(filler)
+            result += filler
             filler = []
-            for i in range(len(token[0])):
-                c = next(digits_iter, NUMBER_TOKEN_MATCH[token[0][0]])
+            for i in range(len(token.token)):
+                c = next(digits_iter, NUMBER_TOKEN_MATCH[token.token[0]])
                 if c is not None:
                     result.append(c)
                     if c not in DIGITS:
-                        c = next(digits_iter, NUMBER_TOKEN_MATCH[token[0][0]])
+                        c = next(digits_iter, NUMBER_TOKEN_MATCH[token.token[0]])
                         if c is not None:  # pragma: no cover
                             result.append(c)
     result.extend(digits_iter)
-    result.extend(filler)
+    result += filler
     return result
 
 
@@ -406,23 +448,21 @@ def text(Value: Any, fmt: str) -> str:
     "912° 34' 56''"
     """
 
-    test_arr, have_decimal, have_thousands, percents = convert_format(fmt)
-    # print(test_arr)
-    types = [token[1] for token in test_arr]
-    tokens = [t for t in test_arr]
-    if Types.AM_PM in types:  # convert to 12 hour time if AM/PM included
-        tokens = [
-            t if t[0][0] != "h" else [t[0].upper(), Types.DATETIME] for t in test_arr
-        ]
-        types.remove(Types.AM_PM)
-        types.append(Types.DATETIME)
+    tokens, have_decimal, have_thousands, percents = convert_format(fmt)
 
-    if Types.DATETIME in types:
+    if (
+        Types.AM_PM in tokens.token_type.values
+    ):  # convert to 12 hour time if AM/PM included
+        if not tokens[tokens.token.isin(["h", "hh"])].empty:
+            tokens.at[tokens.token.isin(["h", "hh"]), "token"] = (
+                tokens[tokens.token.isin(["h", "hh"])].token.values[0].upper()
+            )
+            tokens.at[tokens.token_type == Types.AM_PM, "token_type"] = Types.DATETIME
+
+    if Types.DATETIME in tokens.token_type.values:
         return date_time(Value, tokens)
-    elif Types.NUMBER in types:
+    elif Types.NUMBER in tokens.token_type.values:
         return number_function(Value, tokens, have_decimal, have_thousands, percents)
-        pass
 
 
-# print(text(1234.1239, '"m"#,##0.0'))
-convert_format("MM/DD/YY")
+print(text(1.2859, "$$$ 0.00%"))
