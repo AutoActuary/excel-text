@@ -2,11 +2,19 @@ import datetime
 from typing import Any
 import excel_dates
 import pandas as pd
+from errors import *
 
+"""
+https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L39
+"""
 number_options = set("0#?.,%")
 placeholders = set("#0?")
 NUMBER_TOKEN_MATCH = {"#": None, "0": "0", "?": "0"}
 # DIGITS = set("0123456789")
+
+"""
+https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L44
+"""
 
 
 class Types:
@@ -16,6 +24,9 @@ class Types:
     NUMBER = 4
 
 
+"""
+https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L209
+"""
 df_datetime_formats = pd.DataFrame(
     [
         ["yyyy", lambda d: d.strftime("%Y")],
@@ -59,8 +70,19 @@ df_datetime_formats["char"] = list(
 
 
 def elapsed(d, units):
+    """
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L176
+
+    converts
+    :param d: Value, converted to DateTime
+    :param units: h|m|s = hours|minutes|seconds
+    :return: Returns the total hours|minutes|seconds
+    """
     date_zero = datetime.datetime(1899, 12, 30, 0, 0, 0)
     delta_time = (d - date_zero).total_seconds()
+
+    if units not in "hms":
+        raise ValueExcelError("invalid time duration option")
 
     if units == "h":
         delta_time //= 60 ** 2
@@ -71,6 +93,12 @@ def elapsed(d, units):
 
 
 def check_duplicates(element, characters):
+    """
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L77
+    :param element:
+    :param characters:
+    :return:
+    """
     elements = pd.DataFrame(columns=["position", "code", "next_code", "char"])
     elements.loc[0] = list(element)
 
@@ -81,6 +109,16 @@ def check_duplicates(element, characters):
 
 
 def check_am_pm(element, characters, fmt):
+    """
+    copied code....link...
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L63
+
+
+    :param element:
+    :param characters:
+    :param fmt:
+    :return:
+    """
     if element.code == "a" and element.next_code in "m/":
         if element.next_code == "m":
             to_match = "am/pm"
@@ -94,12 +132,26 @@ def check_am_pm(element, characters, fmt):
 
 
 def format_value(format_str, fmt_value):
-    return df_datetime_formats[
-        df_datetime_formats.format == format_str
-    ].conversion.values[0](fmt_value)
+    """
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L282
+    :param format_str:
+    :param fmt_value:
+    :return:
+    """
+    try:
+        return df_datetime_formats[
+            df_datetime_formats.format == format_str
+        ].conversion.values[0](fmt_value)
+    except Exception:
+        raise ValueExcelError("incorrect DateTime format")
 
 
 def convert_format(fmt):
+    """
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L87
+    :param fmt:
+    :return:
+    """
     last_date_token = None
     have_decimal = False
     have_thousands = False
@@ -123,6 +175,8 @@ def convert_format(fmt):
             word = char.code
 
             while char.next_code != '"':
+                if char.next_code is None:
+                    raise NaExcelError("missing following quotation marks")
                 char = next(characters)
                 word += char.code
             word = word.strip('"')
@@ -174,10 +228,14 @@ def convert_format(fmt):
                 tokens.loc[len(tokens)] = [code, Types.NUMBER]
 
         elif char.code == "[" and char.next_code in set("hms"):
+            if char.next_code is None:
+                raise ValueExcelError("missing arguments")
             char = next(characters)
             code = check_duplicates(char, characters)
             tokens.loc[len(tokens)] = [f"[{code[0]}]", Types.DATETIME]
-            next(characters)
+
+            if next(characters).code != "]":
+                raise ValueExcelError("missing ']'")
             last_date_token = tokens.iloc[-1].token
 
         elif char.code in df_datetime_formats.char.values:
@@ -222,6 +280,13 @@ def convert_format(fmt):
 
 
 def date_time(Value, tokens):
+    """
+
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L282
+    :param Value:
+    :param tokens:
+    :return:
+    """
     value_datetime = excel_dates.ensure_python_datetime(Value)
 
     # check is seconds are present, but milliseconds not. Round of to seconds if so.
@@ -241,10 +306,23 @@ def date_time(Value, tokens):
     return "".join(tokens.token.values)
 
 
-def number_function(Value, tokens, have_decimal, have_thousands, percents):
+def number_function(
+    Value, tokens, have_decimal, have_thousands, percents, thousands_char
+):
+    """
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L300
+
+    :param Value:
+    :param tokens:
+    :param have_decimal:
+    :param have_thousands:
+    :param percents:
+    :param thousands_char:
+    :return:
+    """
     Value *= 100 ** percents
     number_format = "".join(tokens[tokens.token_type == Types.NUMBER].token.values)
-    thousands = "," if have_thousands else ""
+    thousands = thousands_char if have_thousands else ""
 
     if have_decimal:
         left_num_format, right_num_format = number_format.split(".", 1)
@@ -279,6 +357,14 @@ def number_function(Value, tokens, have_decimal, have_thousands, percents):
 
 
 def token_to_number_converter(tokens, number, left_side=False):
+    """
+    https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L327
+
+    :param tokens:
+    :param number:
+    :param left_side:
+    :return:
+    """
     digits_iter = iter(
         number[::-1] if left_side else number
     )  # reverse order if left side
@@ -305,11 +391,10 @@ def token_to_number_converter(tokens, number, left_side=False):
     return result
 
 
-def text(Value: Any, fmt: str) -> str:
+def get_text_function(config=None):
     """
-    :param Value:
-    :param fmt:
-    :return:
+    >>> text = get_text_function({"decimal": ".", "thousands": ","})
+
     >>> text(1224.1234, "d")
     '8'
     >>> text(1224.1234, "dd")
@@ -384,18 +469,41 @@ def text(Value: Any, fmt: str) -> str:
     "912° 34' 56''"
     """
 
-    tokens, has_decimals, has_thousands, percents = convert_format(fmt)
+    if config is None:
+        config = {"decimal": ".", "thousands": ",", "raise": True}
 
-    if (
-        Types.AM_PM in tokens.token_type.values
-    ):  # convert to 12 hour time if AM/PM included
-        if not tokens[tokens.token.isin(["h", "hh"])].empty:
-            tokens.at[tokens.token.isin(["h", "hh"]), "token"] = (
-                tokens[tokens.token.isin(["h", "hh"])].token.values[0].upper()
-            )
-            tokens.at[tokens.token_type == Types.AM_PM, "token_type"] = Types.DATETIME
+    def text(Value: Any, fmt: str) -> str:
+        try:
+            decimal_char = config["decimal"]
+            thousands_char = config["thousands"]
 
-    if Types.DATETIME in tokens.token_type.values:
-        return date_time(Value, tokens)
-    elif Types.NUMBER in tokens.token_type.values:
-        return number_function(Value, tokens, has_decimals, has_thousands, percents)
+            tokens, has_decimals, has_thousands, percents = convert_format(fmt)
+
+            if (
+                Types.AM_PM in tokens.token_type.values
+            ):  # convert to 12 hour time if AM/PM included
+                if not tokens[tokens.token.isin(["h", "hh"])].empty:
+                    tokens.at[tokens.token.isin(["h", "hh"]), "token"] = (
+                        tokens[tokens.token.isin(["h", "hh"])].token.values[0].upper()
+                    )
+                    tokens.at[
+                        tokens.token_type == Types.AM_PM, "token_type"
+                    ] = Types.DATETIME
+
+            if Types.DATETIME in tokens.token_type.values:
+                return date_time(Value, tokens)
+            elif Types.NUMBER in tokens.token_type.values:
+                return number_function(
+                    Value, tokens, has_decimals, has_thousands, percents, thousands_char
+                )
+        except ExcelError as e:
+            if config["raise"]:
+                raise e
+            else:
+                return str(e)
+
+    return text
+
+
+text = get_text_function({"decimal": ".", "thousands": ",", "raise": False})
+print(text(1234.8765, "hhh"))  # test rounding
