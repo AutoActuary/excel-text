@@ -7,7 +7,6 @@ from errors import *
 """
 https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L39
 """
-number_options = set("0#?.,%")
 placeholders = set("#0?")
 NUMBER_TOKEN_MATCH = {"#": None, "0": "0", "?": "0"}
 # DIGITS = set("0123456789")
@@ -71,35 +70,50 @@ df_datetime_formats["char"] = list(
 
 def elapsed(d, units):
     """
+    solution is unique enough.
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L176
 
     converts time to time-elapsed.
     :param d: Value as DateTime
     :param units: h|m|s = hours|minutes|seconds
     :return: Returns the total hours|minutes|seconds
+
+    >>> elapsed(datetime.datetime(1903,5,18,0,0,0), "h")
+    29616
     """
     date_zero = datetime.datetime(1899, 12, 30, 0, 0, 0)
     delta_time = (d - date_zero).total_seconds()
-
     if units not in "hms":
         raise ValueExcelError("invalid time duration option")
 
     if units == "h":
-        delta_time //= 60 ** 2
+        delta_time /= 60 ** 2
     if units == "m":
-        delta_time //= 60
+        delta_time /= 60
 
     return int(delta_time)
 
 
 def check_duplicates(element, characters):
     """
+    solution is unique enough.
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L77
 
     Select all consecutive chars matching element from the characters dataframe and returns as string.
     :param element: 1 entry from the characters dataframe.
     :param characters: The dataframe containing the: code, next_code, char
     :return: Returns a string of characters that matches element.code
+
+    element:
+    Pandas(Index=0, code='y', next_code='y', character='y')
+
+    characters:
+    Pandas(Index=1, code='y', next_code='y', character='y')
+    Pandas(Index=2, code='y', next_code='y', character='y')
+    Pandas(Index=3, code='y', next_code=None, character='y')
+
+    output:
+    "yyyy"
     """
     elements = pd.DataFrame(columns=["position", "code", "next_code", "char"])
     elements.loc[0] = list(element)
@@ -112,6 +126,7 @@ def check_duplicates(element, characters):
 
 def check_am_pm(element, characters, fmt):
     """
+    solution was copied
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L63
 
     Check if the fmt input contains the am/pm option. i.e 'am/pm', 'a/p', 'A/P', 'A/p', 'a/P'
@@ -134,12 +149,16 @@ def check_am_pm(element, characters, fmt):
 
 def format_value(format_str, fmt_value):
     """
+    solution is unique enough.
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L282
 
     Formats the excel token to its required value by using the fmt_value and the df_datetime_formats dataframe
     :param format_str: format token that must match df_datetime_formats["format"]
     :param fmt_value: The datetime value that will be converted to its required format.
     :return: Returns the formatted datetime
+
+    >>> format_value("yyyy", datetime.datetime(1903, 5, 18))
+    '1903'
     """
     try:
         return df_datetime_formats[
@@ -149,14 +168,25 @@ def format_value(format_str, fmt_value):
         raise ValueExcelError("incorrect DateTime format")
 
 
-def convert_format(fmt):
+def convert_format(fmt, decimal_char, thousands_char):
     """
+    solution was copied
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L87
 
     Convert the input to tokens.
+    :param thousands_char: thousands seperator
+    :param decimal_char: decimal seperator
     :param fmt: the format input to the text function
     :return: a tokens dataframe cotaining the token string and token type.
+
+    >>> convert_format("yyyy", ".", ",")
+    (  token token_type
+    0  yyyy          2, False, False, 0)
     """
+
+    numbers = "0#?%" + decimal_char + thousands_char
+    number_options = set(numbers)
+
     last_date_token = None
     have_decimal = False
     have_thousands = False
@@ -192,12 +222,12 @@ def convert_format(fmt):
             last_date_token
             and (
                 (last_date_token[0] == "s" or last_date_token == "[s]")
-                and char.code == "."
-                or char.code == ","
+                and char.code == decimal_char
+                or char.code == thousands_char
             )
         ):
             need_emit = True
-            if char.code == ",":
+            if char.code == thousands_char:
                 need_emit = False
                 if (
                     have_decimal
@@ -207,14 +237,14 @@ def convert_format(fmt):
                     or fmt[char.Index - 1] not in placeholders
                     or fmt[char.Index + 1] not in placeholders
                 ):
-                    # just a regular comma, not 1000's indicator
+                    # just a regular thousands char, not 1000's indicator
                     if char.Index == 0 or (fmt[char.Index - 1] not in placeholders):
                         tokens.loc[len(tokens)] = [char.code, Types.STRING]
 
                 else:
                     have_thousands = True
 
-            elif char.code == ".":
+            elif char.code == decimal_char:
                 if have_decimal:
                     need_emit = False
                     tokens.loc[len(tokens)] = [char.code, Types.STRING]
@@ -269,7 +299,7 @@ def convert_format(fmt):
                         Types.DATETIME,
                     ]
 
-                elif code == "." and char.next_code == "0":
+                elif code == decimal_char and char.next_code == "0":
                     # if we are here with '.', then this is subseconds: ss.000
                     code_next = next(characters)
                     code += check_duplicates(code_next, characters)
@@ -286,13 +316,24 @@ def convert_format(fmt):
 
 def date_time(Value, tokens):
     """
+    solution is unique enough.
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L282
 
     Loop through all tokens at convert the tokens with a datetime type to usble datetime values.
     :param Value: The value input of the text function.
     :param tokens: A dataframe with tokens.
     :return: a string with the final converted result.
+
+    Value:
+    1234
+    tokens:
+      token token_type
+    0  yyyy          2
+
+    output:
+    1903
     """
+
     value_datetime = excel_dates.ensure_python_datetime(Value)
 
     # check is seconds are present, but milliseconds not. Round of to seconds if so.
@@ -308,31 +349,60 @@ def date_time(Value, tokens):
     for index, row in tokens.iterrows():
         if row.token_type != Types.STRING:
             tokens.loc[index] = format_value(row.token, value_datetime)
-
     return "".join(tokens.token.values)
 
 
-def number_function(Value, tokens, have_decimal, have_thousands, percents):
+def number_function(
+    Value, tokens, have_decimal, have_thousands, percents, decimal_char, thousands_char
+):
     """
+    solution was copied
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L300
 
     Sllit Value and token instructions to integers and decimals
+    :param thousands_char: thousands seperator character
+    :param decimal_char: decimal seperator character.
     :param Value: int/datetime value that must be converted
     :param tokens: Dataframe of tokens that is used to format the Value input
     :param have_decimal: boolean value indicating if the result must have decimal value
     :param have_thousands: boolean value indicating if the result must have a thousands seperator
     :param percents: converts value to % if percents > 0
     :return: a string with the formatted value
+
+    Value:
+    1234.1239
+    tokens:
+      token token_type
+    0     $          1
+    1     #          4
+    2                1
+    3    ##          4
+    4     0          4
+    5     .          4
+    6   000          4
+    have_decimal:
+    True
+    have_thousands:
+    False
+    percents:
+    0
+    decimal_char:
+    .
+    thousands_char:
+    ,
+
+    output:
+    $1,234.124
     """
     Value *= 100 ** percents
     number_format = "".join(tokens[tokens.token_type == Types.NUMBER].token.values)
     thousands = thousands_char if have_thousands else ""
 
     if have_decimal:
-        left_num_format, right_num_format = number_format.split(".", 1)
+        left_num_format, right_num_format = number_format.split(decimal_char, 1)
         decimals = len(right_num_format)
         Value_left_side, Value_right_side = f"{Value:#{thousands}.{decimals}f}".split(
-            "."
+            decimal_char
         )
         Value_right_side = Value_right_side.rstrip("0")
     else:
@@ -341,7 +411,7 @@ def number_function(Value, tokens, have_decimal, have_thousands, percents):
     Value_left_side = Value_left_side.lstrip("0")
 
     if have_decimal:
-        decimal_loc = tokens[tokens.token == "."].index.values[0]
+        decimal_loc = tokens[tokens.token == decimal_char].index.values[0]
         left_side_tokens = tokens[tokens.index < decimal_loc]
         left_side_results = token_to_number_converter(
             left_side_tokens, Value_left_side, left_side=True
@@ -362,6 +432,7 @@ def number_function(Value, tokens, have_decimal, have_thousands, percents):
 
 def token_to_number_converter(tokens, number, left_side=False):
     """
+    solution was copied
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L327
 
     Loop through all tokens and convert the tokens to usable numerical values.
@@ -369,7 +440,24 @@ def token_to_number_converter(tokens, number, left_side=False):
     :param number: value that gets converted to the format input
     :param left_side: boolean. if True, "tokens" and "number" are for whole numbers.
     :return: a list with the formatted values.
+
+    tokens:
+      token token_type
+    0     $          1
+    1     #          4
+    2    ##          4
+    3     0          4
+
+    number:
+    1,234
+
+    left_side:
+    True
+
+    output:
+    ['4', '3', '2', ',', '1', '$']
     """
+
     digits_iter = iter(
         number[::-1] if left_side else number
     )  # reverse order if left side
@@ -398,7 +486,7 @@ def token_to_number_converter(tokens, number, left_side=False):
 
 def get_text_function(config=None):
     """
-    >>> text = get_text_function({"decimal": ".", "thousands": ","})
+    >>> text = get_text_function({"decimal": ".", "thousands": ",", "raise":False})
 
     >>> text(1224.1234, "d")
     '8'
@@ -439,7 +527,7 @@ def get_text_function(config=None):
     >>> text(1234.5432, "[ss]")
     '106664532'
 
-    >>> text(1234.1239, "$#,##0.000")
+    >>> text(1234.1239, "$# ##0.000")
     '$1,234.124'
     >>> text(1234, "R#,##0.0")
     'R1,234.0'
@@ -478,11 +566,34 @@ def get_text_function(config=None):
         config = {"decimal": ".", "thousands": ",", "raise": True}
 
     def text(Value: Any, fmt: str) -> str:
-        try:
-            decimal_char = config["decimal"]
-            thousands_char = config["thousands"]
+        """
+        The same functions as the =TEXT(...) function in excel. Converts the input value to the desired format.
+        :param Value: int/float/datetime value that will be formatted.
+        :param fmt: The format that is used to format the value input.
+        :return: formatted string.
+        """
+        if config["raise"]:
+            raise_input = config["raise"]
+        else:
+            raise_input = True
 
-            tokens, has_decimals, has_thousands, percents = convert_format(fmt)
+        if config["decimal"]:
+            decimal_char = config["decimal"]
+        else:
+            decimal_char = True
+
+        if config["thousands"]:
+            thousands_char = config["thousands"]
+        else:
+            thousands_char = True
+
+        try:
+            # decimal_char = config["decimal"]
+            # thousands_char = config["thousands"]
+
+            tokens, has_decimals, has_thousands, percents = convert_format(
+                fmt, decimal_char, thousands_char
+            )
 
             if (
                 Types.AM_PM in tokens.token_type.values
@@ -499,10 +610,16 @@ def get_text_function(config=None):
                 return date_time(Value, tokens)
             elif Types.NUMBER in tokens.token_type.values:
                 return number_function(
-                    Value, tokens, has_decimals, has_thousands, percents, thousands_char
+                    Value,
+                    tokens,
+                    has_decimals,
+                    has_thousands,
+                    percents,
+                    decimal_char,
+                    thousands_char,
                 )
         except ExcelError as e:
-            if config["raise"]:
+            if raise_input:
                 raise e
             else:
                 return str(e)
@@ -511,4 +628,3 @@ def get_text_function(config=None):
 
 
 text = get_text_function({"decimal": ".", "thousands": ",", "raise": False})
-print(text(1234.8765, "hhh"))  # test rounding
