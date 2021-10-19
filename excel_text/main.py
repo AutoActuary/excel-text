@@ -73,8 +73,8 @@ def elapsed(d, units):
     """
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L176
 
-    converts
-    :param d: Value, converted to DateTime
+    converts time to time-elapsed.
+    :param d: Value as DateTime
     :param units: h|m|s = hours|minutes|seconds
     :return: Returns the total hours|minutes|seconds
     """
@@ -95,9 +95,11 @@ def elapsed(d, units):
 def check_duplicates(element, characters):
     """
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L77
-    :param element:
-    :param characters:
-    :return:
+
+    Select all consecutive chars matching element from the characters dataframe and returns as string.
+    :param element: 1 entry from the characters dataframe.
+    :param characters: The dataframe containing the: code, next_code, char
+    :return: Returns a string of characters that matches element.code
     """
     elements = pd.DataFrame(columns=["position", "code", "next_code", "char"])
     elements.loc[0] = list(element)
@@ -110,14 +112,13 @@ def check_duplicates(element, characters):
 
 def check_am_pm(element, characters, fmt):
     """
-    copied code....link...
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L63
 
-
-    :param element:
-    :param characters:
-    :param fmt:
-    :return:
+    Check if the fmt input contains the am/pm option. i.e 'am/pm', 'a/p', 'A/P', 'A/p', 'a/P'
+    :param element: 1 entry from the characters dataframe.
+    :param characters: The dataframe containing the: code, next_code, char
+    :param fmt: a string of the fmt input to the text function
+    :return: returns 'am/pm', 'a/p', 'A/P', 'A/p', 'a/P' if there is a match, else None
     """
     if element.code == "a" and element.next_code in "m/":
         if element.next_code == "m":
@@ -134,9 +135,11 @@ def check_am_pm(element, characters, fmt):
 def format_value(format_str, fmt_value):
     """
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L282
-    :param format_str:
-    :param fmt_value:
-    :return:
+
+    Formats the excel token to its required value by using the fmt_value and the df_datetime_formats dataframe
+    :param format_str: format token that must match df_datetime_formats["format"]
+    :param fmt_value: The datetime value that will be converted to its required format.
+    :return: Returns the formatted datetime
     """
     try:
         return df_datetime_formats[
@@ -149,8 +152,10 @@ def format_value(format_str, fmt_value):
 def convert_format(fmt):
     """
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L87
-    :param fmt:
-    :return:
+
+    Convert the input to tokens.
+    :param fmt: the format input to the text function
+    :return: a tokens dataframe cotaining the token string and token type.
     """
     last_date_token = None
     have_decimal = False
@@ -281,11 +286,12 @@ def convert_format(fmt):
 
 def date_time(Value, tokens):
     """
-
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/date_time.py#L282
-    :param Value:
-    :param tokens:
-    :return:
+
+    Loop through all tokens at convert the tokens with a datetime type to usble datetime values.
+    :param Value: The value input of the text function.
+    :param tokens: A dataframe with tokens.
+    :return: a string with the final converted result.
     """
     value_datetime = excel_dates.ensure_python_datetime(Value)
 
@@ -306,19 +312,17 @@ def date_time(Value, tokens):
     return "".join(tokens.token.values)
 
 
-def number_function(
-    Value, tokens, have_decimal, have_thousands, percents, thousands_char
-):
+def number_function(Value, tokens, have_decimal, have_thousands, percents):
     """
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L300
 
-    :param Value:
-    :param tokens:
-    :param have_decimal:
-    :param have_thousands:
-    :param percents:
-    :param thousands_char:
-    :return:
+    Sllit Value and token instructions to integers and decimals
+    :param Value: int/datetime value that must be converted
+    :param tokens: Dataframe of tokens that is used to format the Value input
+    :param have_decimal: boolean value indicating if the result must have decimal value
+    :param have_thousands: boolean value indicating if the result must have a thousands seperator
+    :param percents: converts value to % if percents > 0
+    :return: a string with the formatted value
     """
     Value *= 100 ** percents
     number_format = "".join(tokens[tokens.token_type == Types.NUMBER].token.values)
@@ -360,10 +364,11 @@ def token_to_number_converter(tokens, number, left_side=False):
     """
     https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L327
 
-    :param tokens:
-    :param number:
-    :param left_side:
-    :return:
+    Loop through all tokens and convert the tokens to usable numerical values.
+    :param tokens: dataframe of formats that's used to convert the number input.
+    :param number: value that gets converted to the format input
+    :param left_side: boolean. if True, "tokens" and "number" are for whole numbers.
+    :return: a list with the formatted values.
     """
     digits_iter = iter(
         number[::-1] if left_side else number
