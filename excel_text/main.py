@@ -560,6 +560,15 @@ def get_text_function(config=None):
 
     >>> text(9123456, "##0° 00' 00''")
     "912° 34' 56''"
+
+    >>> text_with_underscores = get_text_function({"thousands": "_"})
+    >>> text_with_underscores(123123123123123, "#_##0.00")
+    '123_123_123_123_123.00'
+
+    # TODO: Allow arbitrary thousands separators. Python currently only supports ``,`` and ``_``.
+    # >>> text_with_spaces = get_text_function({"thousands": " "})
+    # >>> text_with_spaces(123123123123123, "# ##0.00")
+    # '123 123 123 123 123.00'
     """
 
     # Provide config defaults.
