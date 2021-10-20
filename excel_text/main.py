@@ -486,7 +486,7 @@ def token_to_number_converter(tokens, number, left_side=False):
 
 def get_text_function(config=None):
     """
-    >>> text = get_text_function({"decimal": ".", "thousands": ",", "raise":False})
+    >>> text = get_text_function()
 
     >>> text(1224.1234, "d")
     '8'
@@ -562,8 +562,15 @@ def get_text_function(config=None):
     "912° 34' 56''"
     """
 
+    # Provide config defaults.
     if config is None:
-        config = {"decimal": ".", "thousands": ",", "raise": True}
+        config = {}
+    config = {
+        "decimal": ".",
+        "thousands": ",",
+        "raise": True,
+        **config,
+    }
 
     def text(Value: Any, fmt: str) -> str:
         """
@@ -572,27 +579,11 @@ def get_text_function(config=None):
         :param fmt: The format that is used to format the value input.
         :return: formatted string.
         """
-        if config["raise"]:
-            raise_input = config["raise"]
-        else:
-            raise_input = True
-
-        if config["decimal"]:
-            decimal_char = config["decimal"]
-        else:
-            decimal_char = True
-
-        if config["thousands"]:
-            thousands_char = config["thousands"]
-        else:
-            thousands_char = True
-
         try:
-            # decimal_char = config["decimal"]
-            # thousands_char = config["thousands"]
-
             tokens, has_decimals, has_thousands, percents = convert_format(
-                fmt, decimal_char, thousands_char
+                fmt,
+                config["decimal"],
+                config["thousands"],
             )
 
             if (
@@ -615,11 +606,11 @@ def get_text_function(config=None):
                     has_decimals,
                     has_thousands,
                     percents,
-                    decimal_char,
-                    thousands_char,
+                    config["decimal"],
+                    config["thousands"],
                 )
         except ExcelError as e:
-            if raise_input:
+            if config["raise"]:
                 raise e
             else:
                 return str(e)
