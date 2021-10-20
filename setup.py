@@ -27,5 +27,6 @@ setuptools.setup(
     install_requires=[
         "locate>=1.0==1.*",
         "excel-dates==0.0.2",
+        "pandas>=1.3.4==1.*",
     ],
 )
