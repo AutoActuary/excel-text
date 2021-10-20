@@ -47,6 +47,7 @@ df_datetime_formats = pd.DataFrame(
         ["M", lambda d: str(d.minute)],
         ["ss", lambda d: "{:02d}".format(d.second)],
         ["s", lambda d: str(d.second)],
+        # TODO: Allow arbitrary decimal separators.
         [".", lambda d: "."],
         [".0", lambda d: ".{:01d}".format(round(d.microsecond / 100000))],
         [".00", lambda d: ".{:02d}".format(round(d.microsecond / 10000))],
