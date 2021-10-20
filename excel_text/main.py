@@ -2,7 +2,7 @@ import datetime
 from typing import Any
 import excel_dates
 import pandas as pd
-from errors import *
+from excel_text.errors import *
 
 """
 https://github.com/dgorissen/pycel/blob/165b9548a500d25e6ee200e06a3648e7a5937ee3/src/pycel/lib/text.py#L39
