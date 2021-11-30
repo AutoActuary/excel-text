@@ -62,10 +62,11 @@ def preprocess_am_pm(tokens: List[FormatStringToken]) -> None:
     """
     If AM/PM is present, switch all hour tokens to 12-hour mode.
     """
-    if not any(isinstance(t, AmPmToken) for t in tokens):
-        # Do nothing. The default is 24-hour mode.
-        return
+    last_hour_token = None
+    for i, token in enumerate(tokens):
+        if isinstance(token, AmPmToken) and last_hour_token:
+            # Set the last seen hour token to twelve-hour mode.
+            last_hour_token.twelve = True
 
-    for t in tokens:
-        if isinstance(t, HourToken):
-            t.twelve = True
+        if isinstance(token, HourToken):
+            last_hour_token = token

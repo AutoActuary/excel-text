@@ -562,6 +562,20 @@ class TestGrammar(unittest.TestCase):
             tokenize('"m"#,##0.0', ".", ","),
         )
 
+    def test_am_pm(self):
+        self.assertEqual(
+            [
+                HourToken(text="hh", twelve=False),
+                VerbatimToken(text=":"),
+                HourToken(text="hh", twelve=False),
+                VerbatimToken(text=":"),
+                HourToken(text="hh", twelve=True),
+                VerbatimToken(text=" "),
+                AmPmToken(text="am/pm"),
+            ],
+            tokenize("hh:hh:hh am/pm", ".", ","),
+        )
+
 
 if __name__ == "__main__":
     unittest.main(
