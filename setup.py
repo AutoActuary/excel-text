@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="excel-text",
-    author="Bart-Jan Hulsman",
-    author_email="hulsmanbj@gmail.com",
-    description="Python implementation of the excel text function",
+    author="Bart-Jan Hulsman, Rudolf Byker",
+    author_email="hulsmanbj@gmail.com, rudolfbyker@gmail.com",
+    description="Python implementation of Excel's `text` function",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/AutoActuary/excel-text",
@@ -25,6 +25,7 @@ setuptools.setup(
         "setuptools_scm",
     ],
     install_requires=[
-        "locate",
+        "locate>=1.0==1.*",
+        "excel-dates==0.1.1",
     ],
 )
