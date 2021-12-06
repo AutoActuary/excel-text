@@ -58,3 +58,8 @@ def get_text_function(config: dict = None):
                 return e
 
     return t
+
+
+text = get_text_function({"decimal": ".", "thousands": ",", "raise": True})
+
+print(text(12345.345, "yyyy/mm"))

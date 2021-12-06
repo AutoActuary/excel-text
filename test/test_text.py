@@ -187,8 +187,8 @@ class TestText(unittest.TestCase):
 
     def test_31(self):
         self.assertEqual(
-            "$1 234.124",
-            text(1234.1239, "$# ##0.000"),
+            "$1,234.124",
+            text(1234.1239, "$#,##0.000"),
         )
 
     def test_32(self):

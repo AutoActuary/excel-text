@@ -211,8 +211,8 @@ class NumberToken(FormatStringToken):
     thousands_char: str
 
     def render(self, value: Any):
-        if not isinstance(value, (float, int)):
-            raise ValueError("Value is not numeric.")
+        # if not isinstance(value, (float, int)):
+        #     raise ValueError("Value is not numeric.")
 
         parts = self.text.split(self.decimal_char)
         if len(parts) == 1:
