@@ -1,8 +1,5 @@
 import unittest
 
-from excel_text.temp import temp
-
-
 class TestTemp(unittest.TestCase):
     def test_1(self):
         a = temp()
