@@ -60,6 +60,9 @@ def get_text_function(config: dict = None):
     return t
 
 
-text = get_text_function({"decimal": ".", "thousands": ",", "raise": True})
+if __name__ == "__main__":
+    # text = get_text_function({"decimal": ".", "thousands": ",", "raise": True})
+    text = get_text_function({"decimal": ",", "thousands": " ", "raise": True})
 
-print(text(12345.345, "yyyy/mm"))
+    # print(text(0.2859, "00.00%"))
+    print(text(3123.123, "# ##0,00"))
