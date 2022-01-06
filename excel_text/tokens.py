@@ -211,25 +211,28 @@ class NumberToken(FormatStringToken):
     thousands_char: str
 
     def render(self, value: Any):
-        # if not isinstance(value, (float, int)):
-        #     raise ValueError("Value is not numeric.")
+        if not isinstance(value, (float, int)):
+            raise ValueError("Value is not numeric.")
 
         parts = self.text.split(self.decimal_char)
+        if "%" in self.text:
+            value *= 100
+
         if len(parts) == 1:
             return render_left(
-                parts[0],
+                parts[0][::-1],
                 self.thousands_char,
-                int(round(value)),
+                str(int(round(value)))[::-1],
             )
         else:
             left = render_left(
-                parts[0],
+                parts[0][::-1],
                 self.thousands_char,
-                int(value),
+                str(int(value))[::-1],
             )
             right = render_right(
                 parts[1],
-                value % 1,
+                str(value % 1)[2:],
             )
             return f"{left}{self.decimal_char}{right}"
 
