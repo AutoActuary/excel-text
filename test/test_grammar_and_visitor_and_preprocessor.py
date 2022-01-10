@@ -73,25 +73,19 @@ class TestGrammar(unittest.TestCase):
 
     def test_4(self):
         self.assertEqual(
-            [
-                NumberToken(text='# ##0,00', decimal_char='.', thousands_char=',')
-            ],
+            [NumberToken(text="# ##0,00", decimal_char=".", thousands_char=",")],
             tokenize("# ##0,00", ".", ","),
         )
 
     def test_5(self):
         self.assertEqual(
-            [
-                NumberToken(text='# ##0.00', decimal_char='.', thousands_char=',')
-            ],
+            [NumberToken(text="# ##0.00", decimal_char=".", thousands_char=",")],
             tokenize("# ##0.00", ".", ","),
         )
 
     def test_6(self):
         self.assertEqual(
-            [
-                NumberToken(text="##0° 00' 00''", decimal_char='.', thousands_char=',')
-            ],
+            [NumberToken(text="##0° 00' 00''", decimal_char=".", thousands_char=",")],
             tokenize("##0° 00' 00''", ".", ","),
         )
 
@@ -114,8 +108,8 @@ class TestGrammar(unittest.TestCase):
     def test_10(self):
         self.assertEqual(
             [
-                VerbatimToken(text='$'),
-                NumberToken(text='# ##0.000', decimal_char='.', thousands_char=',')
+                VerbatimToken(text="$"),
+                NumberToken(text="# ##0.000", decimal_char=".", thousands_char=","),
             ],
             tokenize("$# ##0.000", ".", ","),
         )
