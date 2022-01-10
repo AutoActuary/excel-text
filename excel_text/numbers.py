@@ -117,7 +117,9 @@ def render_right(
             if _counter != n_sig_figs:
                 return_string += value
             else:
-                return_string += str(int(value) + int((int(next(values, "0")) + 5) / 10))
+                return_string += str(
+                    int(value) + int((int(next(values, "0")) + 5) / 10)
+                )
         else:
             return_string += character
 
@@ -133,7 +135,6 @@ def calculate_num_significant_figures(fmt_right):
 
 # def rounding_check(fmt_right):
 # fmt_right.count(["0"])
-
 
 # def render_right(
 #     fmt_right: str,

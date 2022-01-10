@@ -232,7 +232,7 @@ class NumberToken(FormatStringToken):
             )
             right = render_right(
                 parts[1],
-                str(value % 1)[2:],
+                str(abs(value) % 1)[2:],
             )
             return f"{left}{self.decimal_char}{right}"
 
