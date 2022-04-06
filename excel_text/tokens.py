@@ -203,7 +203,7 @@ class NumberToken(FormatStringToken):
     >>> NumberToken(text="0000", decimal_char=".", thousands_char=",").render(12)
     '0012'
 
-    >>> NumberToken(text="$###0.00", decimal_char=".", thousands_char=",").render(1234.5678)
+    >>> NumberToken(text="$#,##0.00", decimal_char=".", thousands_char=",").render(1234.5678)
     '$1,234.57'
     """
 

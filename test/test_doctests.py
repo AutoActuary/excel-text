@@ -31,5 +31,5 @@ def find_modules_with_doctests():
 
 if __name__ == "__main__":
     unittest.main(
-        failfast=True,
+        failfast=False,
     )
