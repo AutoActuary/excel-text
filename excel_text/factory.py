@@ -70,5 +70,6 @@ def get_text_function(config: dict = None):
 
 
 if __name__ == "__main__":
-    text = get_text_function({"decimal": ".", "thousands": ",", "raise": True})
-    print(text(-3463.456, "R #,##0.00"))
+    text = get_text_function({"decimal": ".", "thousands": ",", "raise": False})
+    # print(text(-3463.456, "R #,##0.00"))
+    print(text(123.123, "[>1000$# ##0.0"))

@@ -11,7 +11,9 @@ from excel_text.tokens import (
     HourToken,
     BinaryConditionalToken,
     TernaryConditionalToken,
+    VerbatimToken,
 )
+from excel_text.errors import ValueExcelError
 
 
 def preprocess(tokens: List[FormatStringToken]) -> None:
@@ -39,6 +41,11 @@ def preprocess_conditionals(tokens: List[FormatStringToken]) -> None:
             preprocess(t.lt_tokens)
             preprocess(t.eq_tokens)
             preprocess(t.gt_tokens)
+        if isinstance(t, VerbatimToken):
+            if t.text == "[":
+                raise ValueExcelError(
+                    "A value used in the formula is of the wrong data type."
+                )
 
 
 def preprocess_month_minute(tokens: List[FormatStringToken]) -> None:

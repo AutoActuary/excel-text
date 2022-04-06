@@ -1,7 +1,7 @@
 import datetime
 import unittest
-
 from excel_text import text, get_text_function
+from excel_text.errors import ValueExcelError
 
 
 class TestText(unittest.TestCase):
@@ -323,16 +323,19 @@ class TestText(unittest.TestCase):
             text(543, "[=543][h];yyyymm"),
         )
 
-    # FIXME
-    # def test_error(self):
-    #     with self.assertRaises(ValueExcelError):
-    #         text(123.123, "[>1000$# ##0.0"),
-    #
-    #     text1 = get_text_function({"raise": False})
-    #     self.assertEqual(
-    #         ValueExcelError("A value used in the formula is of the wrong data type."),
-    #         text1(123.123, "[>1000$# ##0.0"),
-    #     )
+    def test_error(self):
+        with self.assertRaises(ValueExcelError):
+            text(123.123, "[>1000$# ##0.0"),
+
+        text1 = get_text_function({"raise": False})
+        self.assertEqual(
+            str(
+                ValueExcelError(
+                    "A value used in the formula is of the wrong data type."
+                )
+            ),
+            str(text1(123.123, "[>1000$# ##0.0")),
+        )
 
     def test_decimal_and_thousands(self):
         text_with_underscores = get_text_function({"thousands": "_"})
