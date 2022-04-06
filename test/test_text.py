@@ -1,7 +1,7 @@
 import datetime
 import unittest
-
 from excel_text import text, get_text_function
+from excel_text.errors import ValueExcelError
 
 
 class TestText(unittest.TestCase):
@@ -187,8 +187,8 @@ class TestText(unittest.TestCase):
 
     def test_31(self):
         self.assertEqual(
-            "$1 234.124",
-            text(1234.1239, "$# ##0.000"),
+            "$1,234.124",
+            text(1234.1239, "$#,##0.000"),
         )
 
     def test_32(self):
@@ -231,6 +231,12 @@ class TestText(unittest.TestCase):
         self.assertEqual(
             "R1,234.0",
             text(1234, "R#,##0.0"),
+        )
+
+    def test_38_b(self):
+        self.assertEqual(
+            "R1,234,567.0",
+            text(1234567, "R#,##0.0"),
         )
 
     def test_39(self):
@@ -317,16 +323,19 @@ class TestText(unittest.TestCase):
             text(543, "[=543][h];yyyymm"),
         )
 
-    # FIXME
-    # def test_error(self):
-    #     with self.assertRaises(ValueExcelError):
-    #         text(123.123, "[>1000$# ##0.0"),
-    #
-    #     text1 = get_text_function({"raise": False})
-    #     self.assertEqual(
-    #         ValueExcelError("A value used in the formula is of the wrong data type."),
-    #         text1(123.123, "[>1000$# ##0.0"),
-    #     )
+    def test_error(self):
+        with self.assertRaises(ValueExcelError):
+            text(123.123, "[>1000$# ##0.0"),
+
+        text1 = get_text_function({"raise": False})
+        self.assertEqual(
+            str(
+                ValueExcelError(
+                    "A value used in the formula is of the wrong data type."
+                )
+            ),
+            str(text1(123.123, "[>1000$# ##0.0")),
+        )
 
     def test_decimal_and_thousands(self):
         text_with_underscores = get_text_function({"thousands": "_"})
@@ -349,8 +358,8 @@ class TestText(unittest.TestCase):
 
         text_space_comma = get_text_function({"thousands": " ", "decimal": ","})
         self.assertEqual(
-            "123 123 123 123 123,12",
-            text_space_comma(123123123123123.123, "# ##0,00"),
+            "23 123 123 123 123,12",
+            text_space_comma(23123123123123.123, "# ##0,00"),
         )
 
 

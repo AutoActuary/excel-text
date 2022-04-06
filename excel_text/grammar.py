@@ -18,7 +18,7 @@ class FormatStringParser:
         rules = rf"""
 format_string = if_binary / if_ternary / expressions
 
-expression = double_quoted / single_quoted / ampm / elapsed / datetime / number / colon / at / other
+expression = double_quoted / single_quoted / ampm / elapsed / datetime / colon / at / number / other
 expressions = expression+
 
 double_quoted = ~'"[^\"]+"'
@@ -43,13 +43,12 @@ d = ~"d+"i
 h = ~"h+"i
 s = ~"s+(\.0+)?"i
 
-number = ~"[#0?%{re_decimal_char}{re_thousands_char}]+"
-
 colon = ~":+"
-
 at = ~"@+"
 
+number = ~"[#0?%{re_decimal_char}{re_thousands_char}][^bdeghmnsy;@\[\]]*"
 other = ~"[^;]+?"
+
 """
         return Grammar(rules=rules)
 

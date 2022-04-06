@@ -203,7 +203,7 @@ class NumberToken(FormatStringToken):
     >>> NumberToken(text="0000", decimal_char=".", thousands_char=",").render(12)
     '0012'
 
-    >>> NumberToken(text="$###0.00", decimal_char=".", thousands_char=",").render(1234.5678)
+    >>> NumberToken(text="$#,##0.00", decimal_char=".", thousands_char=",").render(1234.5678)
     '$1,234.57'
     """
 
@@ -215,21 +215,24 @@ class NumberToken(FormatStringToken):
             raise ValueError("Value is not numeric.")
 
         parts = self.text.split(self.decimal_char)
+        if "%" in self.text:
+            value *= 100
+
         if len(parts) == 1:
             return render_left(
-                parts[0],
+                parts[0][::-1],
                 self.thousands_char,
-                int(round(value)),
+                str(int(round(value)))[::-1],
             )
         else:
             left = render_left(
-                parts[0],
+                parts[0][::-1],
                 self.thousands_char,
-                int(value),
+                str(int(value))[::-1],
             )
             right = render_right(
                 parts[1],
-                value % 1,
+                str(abs(value) % 1)[2:],
             )
             return f"{left}{self.decimal_char}{right}"
 
