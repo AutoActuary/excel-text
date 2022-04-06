@@ -7,20 +7,20 @@ def insert_thousands_separator(value: str, thousands: str) -> str:
 
     :return: String representation of the number, with thousands separators.
 
-    >>> insert_thousands_separator("1234567", ",")
-    '1,234,567'
+    >>> insert_thousands_separator("7654321", ",")
+    '765,432,1'
 
-    >>> insert_thousands_separator("123456", ";")
-    '123;456'
+    >>> insert_thousands_separator("654321", ";")
+    '654;321'
 
-    >>> insert_thousands_separator("12345", "_")
-    '12_345'
+    >>> insert_thousands_separator("54321", "_")
+    '543_21'
 
-    >>> insert_thousands_separator("1234567890", " ")
-    '1 234 567 890'
+    >>> insert_thousands_separator("0987654321", " ")
+    '098 765 432 1'
 
-    >>> insert_thousands_separator("234", ",")
-    '234'
+    >>> insert_thousands_separator("432", ",")
+    '432'
 
     >>> insert_thousands_separator("0", ",")
     '0'
@@ -32,33 +32,6 @@ def insert_thousands_separator(value: str, thousands: str) -> str:
             f"{value_left_side_rev[:pos]}{thousands}{value_left_side_rev[pos:]}"
         )
     return value_left_side_rev
-
-
-# def render_left(
-#     fmt_left: str,
-#     thousands_char: str,
-#     value: str,
-# ) -> str:
-#     return_string = ""
-#     filler = ""
-#     for character in fmt_left:
-#         if character in "0#?":
-#             return_string += filler
-#             filler = ""
-#             if len(value) > 0:
-#                 return_string += value[0]
-#                 if len(value) > 1:
-#                     value = value[1:]
-#                 else:
-#                     value = ""
-#             elif character == "0":
-#                 return_string += "0"
-#
-#         else:
-#             filler += character
-#     return_string += value
-#     return_string += filler
-#     return return_string[::-1]
 
 
 def render_left(
@@ -117,12 +90,15 @@ def render_right(
             if _counter != n_sig_figs:
                 return_string += value
             else:
-                return_string += str(
-                    int(value) + int((int(next(values, "0")) + 5) / 10)
-                )
+                return_str = str(int(value) + int((int(next(values, "0")) + 5) / 10))
+                if len(return_str) == 1:
+                    return_string += return_str
+                else:
+                    return_string = (
+                        return_string[:-1] + str(int(return_string[-1]) + 1) + "0"
+                    )
         else:
             return_string += character
-
     return return_string
 
 
@@ -131,32 +107,3 @@ def calculate_num_significant_figures(fmt_right):
     for character in "0#?":
         total += fmt_right.count(character)
     return total
-
-
-# def rounding_check(fmt_right):
-# fmt_right.count(["0"])
-
-# def render_right(
-#     fmt_right: str,
-#     value: str,
-# ) -> str:
-#     return_string = ""
-#     filler = ""
-#     for character in fmt_right:
-#         if character in "0#?":
-#             return_string += filler
-#             filler = ""
-#             if len(value) > 0:
-#                 return_string += value[0]
-#                 if len(value) > 1:
-#                     value = value[1:]
-#                 else:
-#                     value = ""
-#             elif character == "0":
-#                 return_string += "0"
-#
-#         else:
-#             filler += character
-#     # return_string += value
-#     return_string += filler
-#     return return_string

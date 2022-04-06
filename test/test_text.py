@@ -233,6 +233,12 @@ class TestText(unittest.TestCase):
             text(1234, "R#,##0.0"),
         )
 
+    def test_38_b(self):
+        self.assertEqual(
+            "R1,234,567.0",
+            text(1234567, "R#,##0.0"),
+        )
+
     def test_39(self):
         self.assertEqual(
             "678.",
@@ -349,8 +355,8 @@ class TestText(unittest.TestCase):
 
         text_space_comma = get_text_function({"thousands": " ", "decimal": ","})
         self.assertEqual(
-            "123 123 123 123 123,12",
-            text_space_comma(123123123123123.123, "# ##0,00"),
+            "23 123 123 123 123,12",
+            text_space_comma(23123123123123.123, "# ##0,00"),
         )
 
 

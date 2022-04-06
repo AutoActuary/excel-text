@@ -49,7 +49,16 @@ def get_text_function(config: dict = None):
             tree = parser.parse(fmt)
             tokens = visitor.visit(tree)
             preprocess(tokens)
-            return "".join(token.render(value) for token in tokens)
+            return_string = ""
+            filler_chars = ""
+            for token in tokens:
+                entry = token.render(value)
+                if hasattr(token, "thousands_char"):
+                    if entry[0] == "-":
+                        filler_chars += "-"
+                        entry = entry[1:]
+                return_string += entry
+            return filler_chars + return_string
 
         except ExcelError as e:
             if config["raise"]:
@@ -62,7 +71,4 @@ def get_text_function(config: dict = None):
 
 if __name__ == "__main__":
     text = get_text_function({"decimal": ".", "thousands": ",", "raise": True})
-    # text = get_text_function({"decimal": ",", "thousands": " ", "raise": True})
-
-    # print(text(0.2859, "00.00%"))
     print(text(-3463.456, "R #,##0.00"))

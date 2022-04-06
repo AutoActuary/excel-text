@@ -46,7 +46,6 @@ s = ~"s+(\.0+)?"i
 colon = ~":+"
 at = ~"@+"
 
-# number = ~"[#0?%{re_decimal_char}{re_thousands_char}][#0?%{re_decimal_char}{re_thousands_char}acfijklopqrtuvwxz°'\s_]*"
 number = ~"[#0?%{re_decimal_char}{re_thousands_char}][^bdeghmnsy;@\[\]]*"
 other = ~"[^;]+?"
 
