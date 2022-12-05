@@ -21,33 +21,33 @@ format_string = if_binary / if_ternary / expressions
 expression = double_quoted / single_quoted / ampm / elapsed / datetime / colon / at / number / other
 expressions = expression+
 
-double_quoted = ~'"[^\"]+"'
-single_quoted = ~"'[^\']+'"
+double_quoted = ~r'"[^\"]+"'
+single_quoted = ~r"'[^\']+'"
 
-ampm = ~"am?/pm?"i
+ampm = ~r"am?/pm?"i
 
 elapsed = h_elapsed / m_elapsed / s_elapsed
-h_elapsed = ~"\[h+]"i
-m_elapsed = ~"\[m+]"i
-s_elapsed = ~"\[s+]"i
+h_elapsed = ~r"\[h+]"i
+m_elapsed = ~r"\[m+]"i
+s_elapsed = ~r"\[s+]"i
 
 if_binary = if_condition? expressions if_separator expressions
 if_ternary = expressions if_separator expressions if_separator expressions
 if_separator = ";"
-if_condition = ~"\[(<=|>=|=|>|<)([\d{re_decimal_char}]+)]"
+if_condition = ~r"\[(<=|>=|=|>|<)([\d{re_decimal_char}]+)]"
 
 datetime = y / m / d / h / s
-y = ~"y+|e+"i
-m = ~"m+"i
-d = ~"d+"i
-h = ~"h+"i
-s = ~"s+(\.0+)?"i
+y = ~r"y+|e+"i
+m = ~r"m+"i
+d = ~r"d+"i
+h = ~r"h+"i
+s = ~r"s+(\.0+)?"i
 
-colon = ~":+"
-at = ~"@+"
+colon = ~r":+"
+at = ~r"@+"
 
-number = ~"[#0?%{re_decimal_char}{re_thousands_char}][^bdeghmnsy;@\[\]]*"
-other = ~"[^;]+?"
+number = ~r"[#0?%{re_decimal_char}{re_thousands_char}][^bdeghmnsy;@\[\]]*"
+other = ~r"[^;]+?"
 
 """
         return Grammar(rules=rules)
