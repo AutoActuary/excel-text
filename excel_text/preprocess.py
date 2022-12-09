@@ -5,6 +5,7 @@ from excel_text.tokens import (
     MonthOrMinuteToken,
     YearToken,
     MonthToken,
+    DayToken,
     MinuteToken,
     DateToken,
     AmPmToken,
@@ -55,11 +56,21 @@ def preprocess_month_minute(tokens: List[FormatStringToken]) -> None:
     last_date_token = None
     for i, token in enumerate(tokens):
         if isinstance(token, MonthOrMinuteToken):
-            if isinstance(last_date_token, YearToken):
-                # It follows "year", so it must mean "month".
+            if isinstance(last_date_token, (YearToken, DayToken)):
+                # It follows "year" or "day", so it must mean "month".
                 tokens[i] = MonthToken(token.text)
             else:
                 tokens[i] = MinuteToken(token.text)
+
+        if isinstance(token, DateToken):
+            last_date_token = token
+
+    last_date_token = None
+    for i, token in (reversed(list(enumerate(tokens)))):
+        if isinstance(token, (MonthOrMinuteToken, MinuteToken)):
+            if isinstance(last_date_token, (YearToken, DayToken)):
+                # It leads "year" or "day", so it must mean "month".
+                tokens[i] = MonthToken(token.text)
 
         if isinstance(token, DateToken):
             last_date_token = token
