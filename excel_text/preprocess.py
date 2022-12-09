@@ -66,7 +66,7 @@ def preprocess_month_minute(tokens: List[FormatStringToken]) -> None:
             last_date_token = token
 
     last_date_token = None
-    for i, token in (reversed(list(enumerate(tokens)))):
+    for i, token in reversed(list(enumerate(tokens))):
         if isinstance(token, (MonthOrMinuteToken, MinuteToken)):
             if isinstance(last_date_token, (YearToken, DayToken)):
                 # It leads "year" or "day", so it must mean "month".
