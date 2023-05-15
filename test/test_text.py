@@ -1,7 +1,9 @@
 import datetime
 import unittest
 from excel_text import text, get_text_function
-from excel_text.errors import ValueExcelError
+
+# noinspection PyProtectedMember
+from excel_text._errors import ValueExcelError
 
 
 class TestText(unittest.TestCase):

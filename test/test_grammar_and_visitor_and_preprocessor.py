@@ -6,10 +6,17 @@ tests for each one, given the huge number of examples here.
 import unittest
 from typing import List
 
-from excel_text.condition import Condition
-from excel_text.grammar import FormatStringParser
-from excel_text.preprocess import preprocess
-from excel_text.tokens import (
+# noinspection PyProtectedMember
+from excel_text._condition import Condition
+
+# noinspection PyProtectedMember
+from excel_text._grammar import FormatStringParser
+
+# noinspection PyProtectedMember
+from excel_text._preprocess import preprocess
+
+# noinspection PyProtectedMember
+from excel_text._tokens import (
     FormatStringToken,
     NumberToken,
     VerbatimToken,
@@ -26,7 +33,9 @@ from excel_text.tokens import (
     AmPmToken,
     BinaryConditionalToken,
 )
-from excel_text.visitor import FormatStringVisitor
+
+# noinspection PyProtectedMember
+from excel_text._visitor import FormatStringVisitor
 
 
 def tokenize(

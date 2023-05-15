@@ -4,8 +4,8 @@ from typing import Any, List, Generator, TypeVar, Sequence
 from parsimonious import NodeVisitor
 from parsimonious.nodes import Node
 
-from excel_text.condition import Condition
-from excel_text.tokens import (
+from excel_text._condition import Condition
+from excel_text._tokens import (
     YearToken,
     MonthOrMinuteToken,
     FormatStringToken,

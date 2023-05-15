@@ -1,6 +1,6 @@
 from typing import List
 
-from excel_text.tokens import (
+from excel_text._tokens import (
     FormatStringToken,
     MonthOrMinuteToken,
     YearToken,
@@ -14,7 +14,7 @@ from excel_text.tokens import (
     TernaryConditionalToken,
     VerbatimToken,
 )
-from excel_text.errors import ValueExcelError
+from excel_text._errors import ValueExcelError
 
 
 def preprocess(tokens: List[FormatStringToken]) -> None:

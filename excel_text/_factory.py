@@ -1,9 +1,9 @@
 from typing import Union, Any, Optional, Dict, Callable
 
-from excel_text.errors import ExcelError
-from excel_text.preprocess import preprocess
-from excel_text.grammar import FormatStringParser
-from excel_text.visitor import FormatStringVisitor
+from excel_text._errors import ExcelError
+from excel_text._preprocess import preprocess
+from excel_text._grammar import FormatStringParser
+from excel_text._visitor import FormatStringVisitor
 
 
 def get_text_function(

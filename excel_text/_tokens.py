@@ -4,9 +4,9 @@ from typing import Any, List
 
 from excel_dates import ensure_python_date, ensure_python_time
 
-from excel_text.condition import Condition
-from excel_text.elapsed import elapsed_hours, elapsed_minutes, elapsed_seconds
-from excel_text.numbers import render_left, render_right
+from excel_text._condition import Condition
+from excel_text._elapsed import elapsed_hours, elapsed_minutes, elapsed_seconds
+from excel_text._numbers import render_left, render_right
 
 
 @dataclass

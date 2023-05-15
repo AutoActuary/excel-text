@@ -1,7 +1,8 @@
 import datetime
 import unittest
 
-from excel_text.elapsed import elapsed_hours
+# noinspection PyProtectedMember
+from excel_text._elapsed import elapsed_hours
 
 
 class TestElapsedHours(unittest.TestCase):
