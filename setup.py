@@ -25,7 +25,6 @@ setuptools.setup(
         "setuptools_scm",
     ],
     install_requires=[
-        "locate>=1.0==1.*",
         "excel-dates>=1.0==1.*",
         "parsimonious==0.10.*",
     ],

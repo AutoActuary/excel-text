@@ -1,0 +1,6 @@
+# Using this file makes `pip install` faster in CI.
+# See https://pip.pypa.io/en/latest/user_guide/#constraints-files
+# See https://stackoverflow.com/questions/65122957/resolving-new-pip-backtracking-runtime-issue
+
+excel-dates===1.0.3
+parsimonious==0.10.0
