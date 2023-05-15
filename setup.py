@@ -29,4 +29,9 @@ setuptools.setup(
         "excel-dates==0.1.1",
         "parsimonious==0.8.1",
     ],
+    package_data={
+        "": [
+            "py.typed",
+        ],
+    },
 )
