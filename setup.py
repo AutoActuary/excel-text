@@ -26,8 +26,8 @@ setuptools.setup(
     ],
     install_requires=[
         "locate>=1.0==1.*",
-        "excel-dates==0.1.1",
-        "parsimonious==0.8.1",
+        "excel-dates>=1.0==1.*",
+        "parsimonious==0.10.*",
     ],
     package_data={
         "": [
