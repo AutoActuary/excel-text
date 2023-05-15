@@ -1,15 +1,16 @@
 import datetime
 import unittest
 
-from excel_text.elapsed import elapsed_hours
+# noinspection PyProtectedMember
+from excel_text._elapsed import elapsed_hours
 
 
 class TestElapsedHours(unittest.TestCase):
-    def test_time(self):
+    def test_time(self) -> None:
         self.assertEqual(1, elapsed_hours(datetime.time(1)))
         self.assertEqual(2.5, elapsed_hours(datetime.time(2, 30)))
 
-    def test_1900_leap_year(self):
+    def test_1900_leap_year(self) -> None:
         # February 10th
         self.assertEqual(984, elapsed_hours(datetime.date(1900, 2, 10)))
         self.assertEqual(984, elapsed_hours(datetime.datetime(1900, 2, 10)))
@@ -36,11 +37,11 @@ class TestElapsedHours(unittest.TestCase):
         self.assertEqual(1680, elapsed_hours(datetime.datetime(1900, 3, 10)))
         self.assertEqual(1682, elapsed_hours(datetime.datetime(1900, 3, 10, 2)))
 
-    def test_1903_not_leap_year(self):
+    def test_1903_not_leap_year(self) -> None:
         self.assertEqual(29616, elapsed_hours(datetime.date(1903, 5, 18)))
         self.assertEqual(29616, elapsed_hours(datetime.datetime(1903, 5, 18)))
 
-    def test_1904_leap_year(self):
+    def test_1904_leap_year(self) -> None:
         # February 28th
         self.assertEqual(36480, elapsed_hours(datetime.date(1904, 2, 28)))
         self.assertEqual(36492, elapsed_hours(datetime.datetime(1904, 2, 28, 12)))

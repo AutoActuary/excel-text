@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 def insert_thousands_separator(value: str, thousands: str) -> str:
     """
     Insert thousands separator at appropriate locations.
@@ -38,19 +41,20 @@ def render_left(
     fmt_left: str,
     thousands_char: str,
     values: str,
-):
-    values = iter(values)
+) -> str:
+    values_iter = iter(values)
     return_string = ""
     filler = ""
 
     has_thousands_seperator = thousands_char in fmt_left
 
+    value: Optional[str]
     for character in fmt_left:
         if character in "0#?":
             if character == "0":
-                value = next(values, "0")
+                value = next(values_iter, "0")
             else:
-                value = next(values, None)
+                value = next(values_iter, None)
             if value is None:
                 break
             elif value.isnumeric():
@@ -62,7 +66,7 @@ def render_left(
             if character != thousands_char:
                 return_string += character
 
-    for character in list(values):
+    for character in list(values_iter):
         return_string += character
 
     if has_thousands_seperator:
@@ -75,22 +79,24 @@ def render_left(
 def render_right(
     fmt_right: str,
     values: str,
-):
+) -> str:
     _counter = 0
     n_sig_figs = calculate_num_significant_figures(fmt_right)
 
-    values = iter(values)
+    values_iter = iter(values)
     return_string = ""
     sig_figs_counter = 0
     for character in fmt_right:
         _counter += 1
         if character in "0#?":
             sig_figs_counter += 1
-            value = next(values, "0")
+            value = next(values_iter, "0")
             if _counter != n_sig_figs:
                 return_string += value
             else:
-                return_str = str(int(value) + int((int(next(values, "0")) + 5) / 10))
+                return_str = str(
+                    int(value) + int((int(next(values_iter, "0")) + 5) / 10)
+                )
                 if len(return_str) == 1:
                     return_string += return_str
                 else:
@@ -102,7 +108,7 @@ def render_right(
     return return_string
 
 
-def calculate_num_significant_figures(fmt_right):
+def calculate_num_significant_figures(fmt_right: str) -> int:
     total = 0
     for character in "0#?":
         total += fmt_right.count(character)

@@ -4,6 +4,7 @@ from functools import cached_property
 from textwrap import dedent
 
 from parsimonious.grammar import Grammar
+from parsimonious.nodes import Node
 
 
 @dataclass
@@ -12,7 +13,7 @@ class FormatStringParser:
     thousands_char: str
 
     @cached_property
-    def grammar(self):
+    def grammar(self) -> Grammar:
         re_decimal_char = re.escape(self.decimal_char)
         re_thousands_char = re.escape(self.thousands_char)
 
@@ -55,5 +56,5 @@ class FormatStringParser:
 
         return Grammar(rules=rules)
 
-    def parse(self, fmt: str):
+    def parse(self, fmt: str) -> Node:
         return self.grammar.parse(fmt)

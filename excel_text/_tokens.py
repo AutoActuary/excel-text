@@ -4,16 +4,16 @@ from typing import Any, List
 
 from excel_dates import ensure_python_date, ensure_python_time
 
-from excel_text.condition import Condition
-from excel_text.elapsed import elapsed_hours, elapsed_minutes, elapsed_seconds
-from excel_text.numbers import render_left, render_right
+from excel_text._condition import Condition
+from excel_text._elapsed import elapsed_hours, elapsed_minutes, elapsed_seconds
+from excel_text._numbers import render_left, render_right
 
 
 @dataclass
 class FormatStringToken:
     text: str
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         raise NotImplementedError()
 
 
@@ -23,7 +23,7 @@ class MonthOrMinuteToken(FormatStringToken):
     A placeholder token to use when we don't know yet whether it's minutes or months.
     """
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         raise NotImplementedError(
             f"Failed to determine whether '{self.text}' refers to months or minutes."
         )
@@ -31,17 +31,17 @@ class MonthOrMinuteToken(FormatStringToken):
 
 @dataclass
 class DateToken(FormatStringToken):
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         raise NotImplementedError()
 
 
 @dataclass
 class YearToken(DateToken):
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if re.fullmatch("e+", self.text):
             self.text = "yyyy"
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         n = len(self.text)
         d = ensure_python_date(value)
         if n > 2:
@@ -54,7 +54,7 @@ class YearToken(DateToken):
 
 @dataclass
 class MonthToken(DateToken):
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         n = len(self.text)
         d = ensure_python_date(value)
         if n >= 6 or n == 4:
@@ -68,10 +68,12 @@ class MonthToken(DateToken):
         if n == 1:
             return str(d.month)
 
+        raise ValueError(f"Can't render month token with length {n}")
+
 
 @dataclass
 class DayToken(DateToken):
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         n = len(self.text)
         d = ensure_python_date(value)
         if n > 3:
@@ -83,6 +85,8 @@ class DayToken(DateToken):
         if n > 0:
             return str(d.day)
 
+        raise ValueError(f"Can't render day token with length {n}")
+
 
 @dataclass
 class HourToken(DateToken):
@@ -91,7 +95,7 @@ class HourToken(DateToken):
     12-hour mode
     """
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         n = len(self.text)
         d = ensure_python_time(value)
         if self.twelve:
@@ -105,12 +109,12 @@ class HourToken(DateToken):
             if n == 1:
                 return str(d.hour)
 
-        raise ValueError("TODO proper Excel error")
+        raise ValueError(f"Can't render hour token with length {n}")
 
 
 @dataclass
 class MinuteToken(DateToken):
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         n = len(self.text)
         d = ensure_python_time(value)
         if n == 2:
@@ -118,12 +122,14 @@ class MinuteToken(DateToken):
         if n == 1:
             return str(d.minute)
 
+        raise ValueError(f"Can't render minute token with length {n}")
+
 
 @dataclass
 class SecondToken(FormatStringToken):
     decimal_char: str
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         d = ensure_python_time(value)
         val = d.second + d.microsecond / 1000000
 
@@ -143,7 +149,7 @@ class SecondToken(FormatStringToken):
 
 @dataclass
 class AmPmToken(FormatStringToken):
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         d = ensure_python_time(value)
         val = d.strftime("%p")
 
@@ -167,7 +173,7 @@ class AmPmToken(FormatStringToken):
 class ElapsedHoursToken(FormatStringToken):
     text: str = field(default="[h]", init=False, repr=False, compare=False)
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         return str(int(elapsed_hours(value)))
 
 
@@ -175,7 +181,7 @@ class ElapsedHoursToken(FormatStringToken):
 class ElapsedMinutesToken(FormatStringToken):
     text: str = field(default="[m]", init=False, repr=False, compare=False)
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         return str(int(elapsed_minutes(value)))
 
 
@@ -183,7 +189,7 @@ class ElapsedMinutesToken(FormatStringToken):
 class ElapsedSecondsToken(FormatStringToken):
     text: str = field(default="[s]", init=False, repr=False, compare=False)
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         return str(int(elapsed_seconds(value)))
 
 
@@ -193,7 +199,7 @@ class VerbatimToken(FormatStringToken):
     Renders a part of the format string into the results. Ignores the value.
     """
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         return self.text
 
 
@@ -210,7 +216,7 @@ class NumberToken(FormatStringToken):
     decimal_char: str
     thousands_char: str
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         if not isinstance(value, (float, int)):
             raise ValueError("Value is not numeric.")
 
@@ -245,7 +251,7 @@ class StringToken(FormatStringToken):
 
     text: str = field(default="@", init=False, repr=False, compare=False)
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         return str(value)
 
 
@@ -259,7 +265,7 @@ class BinaryConditionalToken(FormatStringToken):
     true_tokens: List[FormatStringToken]
     false_tokens: List[FormatStringToken]
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         tokens = self.true_tokens if self.condition.eval(value) else self.false_tokens
         return "".join(t.render(value) for t in tokens)
 
@@ -274,7 +280,7 @@ class TernaryConditionalToken(FormatStringToken):
     lt_tokens: List[FormatStringToken]
     eq_tokens: List[FormatStringToken]
 
-    def render(self, value: Any):
+    def render(self, value: Any) -> str:
         if value > 0:
             tokens = self.gt_tokens
         elif value < 0:

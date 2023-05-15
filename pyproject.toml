@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "excel-text"
+description="Python implementation of Excel's `text` function"
+dynamic = ["version"]
+dependencies = [
+    "excel-dates>=1.0,==1.*",
+    "parsimonious==0.10.*",
+]
+authors = [
+    {name = "Bart-Jan Hulsman", email = "hulsmanbj@gmail.com"},
+    {name = "Rudolf Byker", email = "rudolfbyker@gmail.com"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.7"
+
+[project.urls]
+repository = "https://github.com/AutoActuary/excel-text"
+
+[tool.setuptools]
+include-package-data = false
+packages = ["excel_text"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[tool.setuptools_scm]
+write_to = "excel_text/version.py"

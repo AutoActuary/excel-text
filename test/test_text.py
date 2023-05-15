@@ -1,329 +1,331 @@
 import datetime
 import unittest
 from excel_text import text, get_text_function
-from excel_text.errors import ValueExcelError
+
+# noinspection PyProtectedMember
+from excel_text._errors import ValueExcelError
 
 
 class TestText(unittest.TestCase):
-    def test_1(self):
+    def test_1(self) -> None:
         self.assertEqual(
             "8",
             text(1224.1234, "d"),
         )
 
-    def test_2(self):
+    def test_2(self) -> None:
         self.assertEqual(
             "08",
             text(1224.1234, "dd"),
         )
 
-    def test_3(self):
+    def test_3(self) -> None:
         self.assertEqual(
             "Sat",
             text(1204.1234, "ddd"),
         )
 
-    def test_4(self):
+    def test_4(self) -> None:
         self.assertEqual(
             "Sunday",
             text(1233.1234, "dddd"),
         )
 
-    def test_5(self):
+    def test_5(self) -> None:
         self.assertEqual(
             "1903",
             text(1231.1234, "YYYY"),
         )
 
-    def test_6(self):
+    def test_6(self) -> None:
         self.assertEqual(
             "03/5/18",
             text(1234.1234, "yy/m/d"),
         )
 
-    def test_7(self):
+    def test_7(self) -> None:
         self.assertEqual(
             "1903/M",
             text(1234.1234, "yyyy/mmmmm"),
         )
 
-    def test_8(self):
+    def test_8(self) -> None:
         self.assertEqual(
             "1903 July",
             text(1294.1234, "yyyy mmmm"),
         )
 
-    def test_9(self):
+    def test_9(self) -> None:
         self.assertEqual(
             "1903 Jun",
             text(1264.1234, "yyyy mmm"),
         )
 
-    def test_10(self):
+    def test_10(self) -> None:
         self.assertEqual(
             "1903/05",
             text(1234.1234, "yyyy/mm"),
         )
 
-    def test_11(self):
+    def test_11(self) -> None:
         self.assertEqual(
             "1903/5",
             text(1234.1234, "yyyy/m"),
         )
 
-    def test_12(self):
+    def test_12(self) -> None:
         self.assertEqual(
             "1903/05/18 02:57:42",
             text(1234.1234, "yyyy/mm/dd hh:mm:ss"),
         )
 
-    def test_13(self):
+    def test_13(self) -> None:
         self.assertEqual(
             "1903/05/18 21:02:10",
             text(1234.8765, "yyyy/mm/dd hh:mm:ss"),
         )
 
-    def test_14(self):
+    def test_14(self) -> None:
         self.assertEqual(
             "1903/05/18 09:02:10 PM",
             text(1234.8765, "yyyy/mm/dd hh:mm:ss AM/PM"),
         )
 
-    def test_15(self):
+    def test_15(self) -> None:
         self.assertEqual(
             "1903/05/18 21:02:09.60",
             text(1234.8765, "yyyy/mm/dd hh:mm:ss.00"),
         )
 
-    def test_16(self):
+    def test_16(self) -> None:
         self.assertEqual(
             "1903/05/18 21:02:26.9",
             text(1234.8766998, "yyyy/mm/dd hh:mm:ss.0"),
         )
 
-    def test_17(self):
+    def test_17(self) -> None:
         self.assertEqual(
             "10:57:55",
             text(123.45689, "hh:mm:ss"),
         )
 
-    def test_18(self):
+    def test_18(self) -> None:
         self.assertEqual(
             "10:55",
             text(123.45689, "hh:ss"),
         )
 
-    def test_19(self):
+    def test_19(self) -> None:
         self.assertEqual(
             "57:55",
             text(123.45689, "mm:ss"),
         )
 
-    def test_20(self):
+    def test_20(self) -> None:
         self.assertEqual(
             "55.30",
             text(123.45689, "ss.00"),
         )
 
-    def test_21(self):
+    def test_21(self) -> None:
         self.assertEqual(
             "06:51:42",
             text(653.2859, "hh:::mm:ss"),
         )
 
-    def test_22(self):
+    def test_22(self) -> None:
         self.assertEqual(
             "29629:02:12",
             text(1234.5432, "[hh]:mm:ss"),
         )
 
-    def test_23(self):
+    def test_23(self) -> None:
         self.assertEqual(
             "1777742:12",
             text(1234.5432, "[mm]:ss"),
         )
 
-    def test_24(self):
+    def test_24(self) -> None:
         self.assertEqual(
             "106664532",
             text(1234.5432, "[ss]"),
         )
 
-    def test_25(self):
+    def test_25(self) -> None:
         self.assertEqual(
             "46932",
             text(0.5432, "[ss]"),
         )
 
-    def test_26(self):
+    def test_26(self) -> None:
         self.assertEqual(
             "4",
             text(datetime.datetime(2024, 10, 4, 5, 3, 4), "d"),
         )
 
-    def test_27(self):
+    def test_27(self) -> None:
         self.assertEqual(
             "5",
             text(datetime.time(5, 3, 4), "h"),
         )
 
-    def test_28(self):
+    def test_28(self) -> None:
         self.assertEqual(
             "24",
             text(datetime.date(2024, 10, 4), "y"),
         )
 
-    def test_29(self):
+    def test_29(self) -> None:
         self.assertEqual(
             "303",
             text(datetime.time(5, 3, 4), "[m]"),
         )
 
-    def test_30(self):
+    def test_30(self) -> None:
         self.assertEqual(
             "1093656",
             text(datetime.date(2024, 10, 4), "[h]"),
         )
 
-    def test_31(self):
+    def test_31(self) -> None:
         self.assertEqual(
             "$1,234.124",
             text(1234.1239, "$#,##0.000"),
         )
 
-    def test_32(self):
+    def test_32(self) -> None:
         self.assertEqual(
             "R1,234.0",
             text(1234, "R#,##0.0"),
         )
 
-    def test_33(self):
+    def test_33(self) -> None:
         self.assertEqual(
             "r1,234.0000",
             text(1234, "r#,##0.0000"),
         )
 
-    def test_34(self):
+    def test_34(self) -> None:
         self.assertEqual(
             "$234.124",
             text(234.1239, "$#,##0.000"),
         )
 
-    def test_35(self):
+    def test_35(self) -> None:
         self.assertEqual(
             "$0.1",
             text(0.1239, "$#,##0.0"),
         )
 
-    def test_36(self):
+    def test_36(self) -> None:
         self.assertEqual(
             "m1,234.1",
             text(1234.1239, '"m"#,##0.0'),
         )
 
-    def test_37(self):
+    def test_37(self) -> None:
         self.assertEqual(
             "m1,234.0",
             text(1234, '"m"#,##0.0'),
         )
 
-    def test_38(self):
+    def test_38(self) -> None:
         self.assertEqual(
             "R1,234.0",
             text(1234, "R#,##0.0"),
         )
 
-    def test_38_b(self):
+    def test_38_b(self) -> None:
         self.assertEqual(
             "R1,234,567.0",
             text(1234567, "R#,##0.0"),
         )
 
-    def test_39(self):
+    def test_39(self) -> None:
         self.assertEqual(
             "678.",
             text(678.123, "."),
         )
 
-    def test_40(self):
+    def test_40(self) -> None:
         self.assertEqual(
             "28.6%",
             text(0.2859, "0.0%"),
         )
 
-    def test_41(self):
+    def test_41(self) -> None:
         self.assertEqual(
             "28.59%",
             text(0.2859, "00.00%"),
         )
 
-    def test_42(self):
+    def test_42(self) -> None:
         self.assertEqual(
             "028.590%",
             text(0.2859, "000.000%"),
         )
 
-    def test_43(self):
+    def test_43(self) -> None:
         self.assertEqual(
             "0001234",
             text(1234, "0000000"),
         )
 
-    def test_44(self):
+    def test_44(self) -> None:
         self.assertEqual(
             "1234",
             text(1234, "0000"),
         )
 
-    def test_45(self):
+    def test_45(self) -> None:
         self.assertEqual(
             "1234",
             text(1234, "000"),
         )
 
-    def test_46(self):
+    def test_46(self) -> None:
         self.assertEqual(
             "12° 34' 56''",
             text(123456, "##0° 00' 00''"),
         )
 
-    def test_47(self):
+    def test_47(self) -> None:
         self.assertEqual(
             "912° 34' 56''",
             text(9123456, "##0° 00' 00''"),
         )
 
-    def test_48(self):
+    def test_48(self) -> None:
         self.assertEqual(
             "-R 3,463.46",
             text(-3463.456, "R #,##0.00"),
         )
 
-    def test_49(self):
+    def test_49(self) -> None:
         self.assertEqual(
             "-0034",
             text(-34.456, "R #,##0.00;0000"),
         )
 
-    def test_50(self):
+    def test_50(self) -> None:
         self.assertEqual(
             "0543",
             text(543.234, "[>543]0000;#0.0"),
         )
 
-    def test_51(self):
+    def test_51(self) -> None:
         self.assertEqual(
             "543.2",
             text(543.234, "[<543]0000;#0.0"),
         )
 
-    def test_52(self):
+    def test_52(self) -> None:
         self.assertEqual(
             "13032",
             text(543, "[=543][h];yyyymm"),
         )
 
-    def test_error(self):
+    def test_error(self) -> None:
         with self.assertRaises(ValueExcelError):
             text(123.123, "[>1000$# ##0.0"),
 
@@ -337,7 +339,7 @@ class TestText(unittest.TestCase):
             str(text1(123.123, "[>1000$# ##0.0")),
         )
 
-    def test_decimal_and_thousands(self):
+    def test_decimal_and_thousands(self) -> None:
         text_with_underscores = get_text_function({"thousands": "_"})
         self.assertEqual(
             "123_123_123_123_123.00",
