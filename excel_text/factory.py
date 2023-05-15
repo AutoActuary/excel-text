@@ -1,4 +1,4 @@
-from typing import Union, Any
+from typing import Union, Any, Optional, Dict, Callable
 
 from excel_text.errors import ExcelError
 from excel_text.preprocess import preprocess
@@ -6,12 +6,16 @@ from excel_text.grammar import FormatStringParser
 from excel_text.visitor import FormatStringVisitor
 
 
-def get_text_function(config: dict = None):
+def get_text_function(
+    config: Optional[Dict[str, Any]] = None
+) -> Callable[[Any, str], Union[str, ExcelError]]:
     """
     Create a text function.
 
     The text function can be configured to return errors rather than raise them, just like in Excel.
     The error classes are all subclasses of :class:`ExcelError`.
+
+    TODO: Use a TypedDict for the `config` param.
 
     :param config: Dictionary with config options.
     :return: TEXT function.
@@ -20,7 +24,8 @@ def get_text_function(config: dict = None):
     # Provide config defaults.
     if config is None:
         config = {}
-    config = {
+
+    full_config: Dict[str, Any] = {
         "decimal": ".",
         "thousands": ",",
         "raise": True,
@@ -28,12 +33,12 @@ def get_text_function(config: dict = None):
     }
 
     parser = FormatStringParser(
-        decimal_char=config["decimal"],
-        thousands_char=config["thousands"],
+        decimal_char=full_config["decimal"],
+        thousands_char=full_config["thousands"],
     )
     visitor = FormatStringVisitor(
-        decimal_char=config["decimal"],
-        thousands_char=config["thousands"],
+        decimal_char=full_config["decimal"],
+        thousands_char=full_config["thousands"],
     )
 
     def t(value: Any, fmt: str) -> Union[str, ExcelError]:
@@ -48,6 +53,7 @@ def get_text_function(config: dict = None):
         try:
             tree = parser.parse(fmt)
             tokens = visitor.visit(tree)
+            # TODO: Try not to do stuff in-place, because it prevents proper type checking.
             preprocess(tokens)
             return_string = ""
             filler_chars = ""
@@ -61,7 +67,7 @@ def get_text_function(config: dict = None):
             return filler_chars + return_string
 
         except ExcelError as e:
-            if config["raise"]:
+            if full_config["raise"]:
                 raise e
             else:
                 return e

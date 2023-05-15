@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List, Generator
+from typing import Any, List, Generator, TypeVar, Sequence
 
 from parsimonious import NodeVisitor
 from parsimonious.nodes import Node
@@ -24,7 +24,10 @@ from excel_text.tokens import (
 )
 
 
-def flatten(values: List) -> Generator:
+T = TypeVar("T")
+
+
+def flatten(values: Sequence[T]) -> Generator[T, None, None]:
     for v in values:
         if isinstance(v, List):
             yield from flatten(v)
@@ -34,133 +37,133 @@ def flatten(values: List) -> Generator:
 
 # noinspection PyMethodMayBeStatic
 @dataclass
-class FormatStringVisitor(NodeVisitor):
+class FormatStringVisitor(NodeVisitor):  # type: ignore
     decimal_char: str
     thousands_char: str
 
     def visit_format_string(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> List[FormatStringToken]:
         return list(flatten(visited_children))
 
     def visit_y(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> YearToken:
         return YearToken(node.text)
 
     def visit_m(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> MonthOrMinuteToken:
         return MonthOrMinuteToken(node.text)
 
     def visit_d(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> DayToken:
         return DayToken(node.text)
 
     def visit_h(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> HourToken:
         return HourToken(node.text)
 
     def visit_s(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> SecondToken:
         return SecondToken(node.text, self.decimal_char)
 
     def visit_ampm(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> AmPmToken:
         return AmPmToken(node.text)
 
     def visit_datetime(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> Any:
         return visited_children[0]
 
     def visit_expression(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> Any:
         return visited_children[0]
 
     def visit_expressions(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> List[Any]:
         return list(flatten(visited_children))
 
     def visit_other(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> VerbatimToken:
         return VerbatimToken(node.text)
 
     def visit_double_quoted(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> VerbatimToken:
         return VerbatimToken(node.text[1:-1].replace(r"\"", '"'))
 
     def visit_single_quoted(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> VerbatimToken:
         return VerbatimToken(node.text[1:-1].replace(r"\'", "'"))
 
     def visit_colon(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> VerbatimToken:
         return VerbatimToken(":")
 
     def visit_h_elapsed(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> ElapsedHoursToken:
         return ElapsedHoursToken()
 
     def visit_m_elapsed(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> ElapsedMinutesToken:
         return ElapsedMinutesToken()
 
     def visit_s_elapsed(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> ElapsedSecondsToken:
         return ElapsedSecondsToken()
 
     def visit_number(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> NumberToken:
         return NumberToken(
             text=node.text,
@@ -171,24 +174,24 @@ class FormatStringVisitor(NodeVisitor):
     def visit_if_condition(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> Condition:
         return Condition(
-            operator=node.match[1],
-            rhs=node.match[2],
+            operator=node.match[1],  # type: ignore
+            rhs=node.match[2],  # type: ignore
         )
 
     def visit_if_separator(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> Node:
         return node
 
     def visit_if_binary(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> BinaryConditionalToken:
         if len(node.children) == 4:
             condition = visited_children[0]
@@ -215,7 +218,7 @@ class FormatStringVisitor(NodeVisitor):
     def visit_if_ternary(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> TernaryConditionalToken:
         if len(node.children) == 5:
             return TernaryConditionalToken(
@@ -232,13 +235,13 @@ class FormatStringVisitor(NodeVisitor):
     def visit_at(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> StringToken:
         return StringToken()
 
     def generic_visit(
         self,
         node: Node,
-        visited_children: List[Any],
+        visited_children: Sequence[Any],
     ) -> Any:
         return visited_children or node

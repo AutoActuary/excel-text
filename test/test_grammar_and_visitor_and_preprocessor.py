@@ -48,48 +48,50 @@ def tokenize(
 
     tree = parser.parse(fmt)
     tokens = visitor.visit(tree)
+
+    # TODO: Try not to do stuff in-place, because it prevents proper type checking.
     preprocess(tokens)
-    return tokens
+    return tokens  # type: ignore
 
 
 class TestGrammar(unittest.TestCase):
-    def test_1(self):
+    def test_1(self) -> None:
         self.assertEqual(
             [NumberToken(text="000", decimal_char=".", thousands_char=",")],
             tokenize("000", ".", ","),
         )
 
-    def test_2(self):
+    def test_2(self) -> None:
         self.assertEqual(
             [NumberToken(text="0000", decimal_char=".", thousands_char=",")],
             tokenize("0000", ".", ","),
         )
 
-    def test_3(self):
+    def test_3(self) -> None:
         self.assertEqual(
             [NumberToken(text="0000000", decimal_char=".", thousands_char=",")],
             tokenize("0000000", ".", ","),
         )
 
-    def test_4(self):
+    def test_4(self) -> None:
         self.assertEqual(
             [NumberToken(text="# ##0,00", decimal_char=".", thousands_char=",")],
             tokenize("# ##0,00", ".", ","),
         )
 
-    def test_5(self):
+    def test_5(self) -> None:
         self.assertEqual(
             [NumberToken(text="# ##0.00", decimal_char=".", thousands_char=",")],
             tokenize("# ##0.00", ".", ","),
         )
 
-    def test_6(self):
+    def test_6(self) -> None:
         self.assertEqual(
             [NumberToken(text="##0° 00' 00''", decimal_char=".", thousands_char=",")],
             tokenize("##0° 00' 00''", ".", ","),
         )
 
-    def test_8(self):
+    def test_8(self) -> None:
         self.assertEqual(
             [
                 NumberToken(text="#.##0,00", decimal_char=".", thousands_char=","),
@@ -97,7 +99,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("#.##0,00", ".", ","),
         )
 
-    def test_9(self):
+    def test_9(self) -> None:
         self.assertEqual(
             [
                 NumberToken(text="#_##0.00", decimal_char=".", thousands_char=","),
@@ -105,7 +107,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("#_##0.00", ".", ","),
         )
 
-    def test_10(self):
+    def test_10(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="$"),
@@ -114,7 +116,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("$# ##0.000", ".", ","),
         )
 
-    def test_11(self):
+    def test_11(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="$"),
@@ -123,7 +125,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("$#,##0.0", ".", ","),
         )
 
-    def test_12(self):
+    def test_12(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="$"),
@@ -132,37 +134,37 @@ class TestGrammar(unittest.TestCase):
             tokenize("$#,##0.000", ".", ","),
         )
 
-    def test_13(self):
+    def test_13(self) -> None:
         self.assertEqual(
             [NumberToken(text=".", decimal_char=".", thousands_char=",")],
             tokenize(".", ".", ","),
         )
 
-    def test_14(self):
+    def test_14(self) -> None:
         self.assertEqual(
             [NumberToken(text="0.0%", decimal_char=".", thousands_char=",")],
             tokenize("0.0%", ".", ","),
         )
 
-    def test_15(self):
+    def test_15(self) -> None:
         self.assertEqual(
             [NumberToken(text="00.00%", decimal_char=".", thousands_char=",")],
             tokenize("00.00%", ".", ","),
         )
 
-    def test_16(self):
+    def test_16(self) -> None:
         self.assertEqual(
             [NumberToken(text="000.000%", decimal_char=".", thousands_char=",")],
             tokenize("000.000%", ".", ","),
         )
 
-    def test_17(self):
+    def test_17(self) -> None:
         self.assertEqual(
             [StringToken()],
             tokenize("@", ".", ","),
         )
 
-    def test_18(self):
+    def test_18(self) -> None:
         self.assertEqual(
             [
                 BinaryConditionalToken(
@@ -182,7 +184,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("[<543]0000;#0.0", ".", ","),
         )
 
-    def test_19(self):
+    def test_19(self) -> None:
         self.assertEqual(
             [
                 BinaryConditionalToken(
@@ -201,7 +203,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("[=543][h];yyyymm", ".", ","),
         )
 
-    def test_20(self):
+    def test_20(self) -> None:
         self.assertEqual(
             [
                 BinaryConditionalToken(
@@ -222,19 +224,19 @@ class TestGrammar(unittest.TestCase):
         )
 
     # FIXME
-    # def test_error(self):
+    # def test_error(self) -> None:
     #     self.assertEqual(
     #         [],
     #         tokenize("[>1000$# ##0.0", ".", ","),
     #     )
 
-    def test_22(self):
+    def test_22(self) -> None:
         self.assertEqual(
             [ElapsedHoursToken()],
             tokenize("[h]", ".", ","),
         )
 
-    def test_23(self):
+    def test_23(self) -> None:
         self.assertEqual(
             [
                 ElapsedHoursToken(),
@@ -246,13 +248,13 @@ class TestGrammar(unittest.TestCase):
             tokenize("[hh]:mm:ss", ".", ","),
         )
 
-    def test_24(self):
+    def test_24(self) -> None:
         self.assertEqual(
             [ElapsedMinutesToken()],
             tokenize("[m]", ".", ","),
         )
 
-    def test_25(self):
+    def test_25(self) -> None:
         self.assertEqual(
             [
                 ElapsedMinutesToken(),
@@ -262,43 +264,43 @@ class TestGrammar(unittest.TestCase):
             tokenize("[mm]:ss", ".", ","),
         )
 
-    def test_26(self):
+    def test_26(self) -> None:
         self.assertEqual(
             [ElapsedSecondsToken()],
             tokenize("[ss]", ".", ","),
         )
 
-    def test_28(self):
+    def test_28(self) -> None:
         self.assertEqual(
             [DayToken(text="d")],
             tokenize("d", ".", ","),
         )
 
-    def test_30(self):
+    def test_30(self) -> None:
         self.assertEqual(
             [DayToken(text="dd")],
             tokenize("dd", ".", ","),
         )
 
-    def test_31(self):
+    def test_31(self) -> None:
         self.assertEqual(
             [DayToken(text="ddd")],
             tokenize("ddd", ".", ","),
         )
 
-    def test_32(self):
+    def test_32(self) -> None:
         self.assertEqual(
             [DayToken(text="dddd")],
             tokenize("dddd", ".", ","),
         )
 
-    def test_33(self):
+    def test_33(self) -> None:
         self.assertEqual(
             [HourToken(text="h", twelve=False)],
             tokenize("h", ".", ","),
         )
 
-    def test_34(self):
+    def test_34(self) -> None:
         self.assertEqual(
             [
                 HourToken(text="hh", twelve=False),
@@ -310,7 +312,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("hh:::mm:ss", ".", ","),
         )
 
-    def test_35(self):
+    def test_35(self) -> None:
         self.assertEqual(
             [
                 HourToken(text="hh", twelve=False),
@@ -322,7 +324,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("hh:mm:ss", ".", ","),
         )
 
-    def test_36(self):
+    def test_36(self) -> None:
         self.assertEqual(
             [
                 HourToken(text="hh", twelve=False),
@@ -332,7 +334,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("hh:ss", ".", ","),
         )
 
-    def test_37(self):
+    def test_37(self) -> None:
         self.assertEqual(
             [
                 MinuteToken(text="mm"),
@@ -342,7 +344,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("mm:ss", ".", ","),
         )
 
-    def test_38(self):
+    def test_38(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="R"),
@@ -352,7 +354,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("R #,##0.00", ".", ","),
         )
 
-    def test_39(self):
+    def test_39(self) -> None:
         self.assertEqual(
             [
                 BinaryConditionalToken(
@@ -376,7 +378,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("R #,##0.00;0000", ".", ","),
         )
 
-    def test_40(self):
+    def test_40(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="R"),
@@ -385,7 +387,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("R#,##0.0", ".", ","),
         )
 
-    def test_41(self):
+    def test_41(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="r"),
@@ -394,19 +396,19 @@ class TestGrammar(unittest.TestCase):
             tokenize("r#,##0.0000", ".", ","),
         )
 
-    def test_42(self):
+    def test_42(self) -> None:
         self.assertEqual(
             [SecondToken(text="ss.00", decimal_char=".")],
             tokenize("ss.00", ".", ","),
         )
 
-    def test_43(self):
+    def test_43(self) -> None:
         self.assertEqual(
             [YearToken(text="y")],
             tokenize("y", ".", ","),
         )
 
-    def test_44(self):
+    def test_44(self) -> None:
         self.assertEqual(
             [
                 YearToken(text="yy"),
@@ -418,43 +420,43 @@ class TestGrammar(unittest.TestCase):
             tokenize("yy/m/d", ".", ","),
         )
 
-    def test_45(self):
+    def test_45(self) -> None:
         self.assertEqual(
             [YearToken(text="yyyy"), VerbatimToken(text=" "), MonthToken(text="mmm")],
             tokenize("yyyy mmm", ".", ","),
         )
 
-    def test_46(self):
+    def test_46(self) -> None:
         self.assertEqual(
             [YearToken(text="yyyy"), VerbatimToken(text=" "), MonthToken(text="mmmm")],
             tokenize("yyyy mmmm", ".", ","),
         )
 
-    def test_47(self):
+    def test_47(self) -> None:
         self.assertEqual(
             [YearToken(text="YYYY")],
             tokenize("YYYY", ".", ","),
         )
 
-    def test_48(self):
+    def test_48(self) -> None:
         self.assertEqual(
             [YearToken(text="yyyy")],
             tokenize("yyyy", ".", ","),
         )
 
-    def test_49(self):
+    def test_49(self) -> None:
         self.assertEqual(
             [YearToken(text="yyyy"), VerbatimToken(text="/"), MonthToken(text="m")],
             tokenize("yyyy/m", ".", ","),
         )
 
-    def test_50(self):
+    def test_50(self) -> None:
         self.assertEqual(
             [YearToken(text="yyyy"), VerbatimToken(text="/"), MonthToken(text="mm")],
             tokenize("yyyy/mm", ".", ","),
         )
 
-    def test_51(self):
+    def test_51(self) -> None:
         self.assertEqual(
             [
                 YearToken(text="yyyy"),
@@ -474,7 +476,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("yyyy/mm/dd hh:mm:ss AM/PM", ".", ","),
         )
 
-    def test_52(self):
+    def test_52(self) -> None:
         self.assertEqual(
             [
                 YearToken(text="yyyy"),
@@ -492,7 +494,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("yyyy/mm/dd hh:mm:ss", ".", ","),
         )
 
-    def test_54(self):
+    def test_54(self) -> None:
         self.assertEqual(
             [
                 YearToken(text="yyyy"),
@@ -510,7 +512,7 @@ class TestGrammar(unittest.TestCase):
             tokenize("yyyy/mm/dd hh:mm:ss.0", ".", ","),
         )
 
-    def test_55(self):
+    def test_55(self) -> None:
         self.assertEqual(
             [
                 YearToken(text="yyyy"),
@@ -528,13 +530,13 @@ class TestGrammar(unittest.TestCase):
             tokenize("yyyy/mm/dd hh:mm:ss.00", ".", ","),
         )
 
-    def test_56(self):
+    def test_56(self) -> None:
         self.assertEqual(
             [YearToken(text="yyyy"), VerbatimToken(text="/"), MonthToken(text="mmmmm")],
             tokenize("yyyy/mmmmm", ".", ","),
         )
 
-    def test_57(self):
+    def test_57(self) -> None:
         self.assertEqual(
             [
                 VerbatimToken(text="m"),
@@ -543,7 +545,7 @@ class TestGrammar(unittest.TestCase):
             tokenize('"m"#,##0.0', ".", ","),
         )
 
-    def test_am_pm(self):
+    def test_am_pm(self) -> None:
         self.assertEqual(
             [
                 HourToken(text="hh", twelve=False),

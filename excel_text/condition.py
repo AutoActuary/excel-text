@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict, Callable
 
-
-operations = {
-    ">": lambda lhs, rhs: lhs > rhs,
-    "<": lambda lhs, rhs: lhs < rhs,
-    ">=": lambda lhs, rhs: lhs >= rhs,
-    "<=": lambda lhs, rhs: lhs <= rhs,
-    "=": lambda lhs, rhs: lhs == rhs,
+operations: Dict[str, Callable[[Any, Any], bool]] = {
+    ">": lambda lhs, rhs: bool(lhs > rhs),
+    "<": lambda lhs, rhs: bool(lhs < rhs),
+    ">=": lambda lhs, rhs: bool(lhs >= rhs),
+    "<=": lambda lhs, rhs: bool(lhs <= rhs),
+    "=": lambda lhs, rhs: bool(lhs == rhs),
 }
 
 
