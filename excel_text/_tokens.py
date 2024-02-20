@@ -229,7 +229,7 @@ class NumberToken(FormatStringToken):
     _mantissa: str = field(init=False, repr=False, compare=False)
     _exponent: str = field(init=False, repr=False, compare=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         dec = re.escape(self.decimal_char)
         match = re.fullmatch(
             rf"(?P<characteristic>[^eE+{dec}]*)({dec}(?P<mantissa>[^eE+{dec}]*))?([eE]\+(?P<exponent>[^eE+{dec}]*))?",
@@ -264,17 +264,16 @@ class NumberToken(FormatStringToken):
             )
             return f"{characteristic}{exponent}"
 
-        if self._characteristic and self._mantissa:
-            characteristic = render_characteristic(
-                self._characteristic,
-                self.thousands_char,
-                str(int(value)),
-            )
-            mantissa = render_mantissa(
-                self._mantissa,
-                str(abs(value) % 1)[2:],
-            )
-            return f"{characteristic}{self.decimal_char}{mantissa}{exponent}"
+        characteristic = render_characteristic(
+            self._characteristic,
+            self.thousands_char,
+            str(int(value)),
+        )
+        mantissa = render_mantissa(
+            self._mantissa,
+            str(abs(value) % 1)[2:],
+        )
+        return f"{characteristic}{self.decimal_char}{mantissa}{exponent}"
 
 
 @dataclass
