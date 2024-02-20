@@ -364,6 +364,10 @@ class TestText(unittest.TestCase):
             text_space_comma(23123123123123.123, "# ##0,00"),
         )
 
+    def test_scientific_format(self) -> None:
+        self.assertEqual("1.22E+07", text(12200000, "0.00E+00"))
+        self.assertEqual("0.33E+00", text(1.0 / 3.0, "0.00E+00"))
+
 
 if __name__ == "__main__":
     unittest.main(
