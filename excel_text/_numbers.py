@@ -37,19 +37,19 @@ def insert_thousands_separator(value: str, thousands: str) -> str:
     return value_left_side_rev
 
 
-def render_left(
-    fmt_left: str,
+def render_characteristic(
+    fmt: str,
     thousands_char: str,
     values: str,
 ) -> str:
-    values_iter = iter(values)
+    values_iter = iter(values[::-1])
     return_string = ""
     filler = ""
 
-    has_thousands_seperator = thousands_char in fmt_left
+    has_thousands_seperator = thousands_char in fmt
 
     value: Optional[str]
-    for character in fmt_left:
+    for character in fmt[::-1]:
         if character in "0#?":
             if character == "0":
                 value = next(values_iter, "0")
@@ -76,17 +76,17 @@ def render_left(
     return return_string[::-1]
 
 
-def render_right(
-    fmt_right: str,
+def render_mantissa(
+    fmt: str,
     values: str,
 ) -> str:
     _counter = 0
-    n_sig_figs = calculate_num_significant_figures(fmt_right)
+    n_sig_figs = calculate_num_significant_figures(fmt)
 
     values_iter = iter(values)
     return_string = ""
     sig_figs_counter = 0
-    for character in fmt_right:
+    for character in fmt:
         _counter += 1
         if character in "0#?":
             sig_figs_counter += 1

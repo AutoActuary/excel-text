@@ -6,7 +6,7 @@ from excel_dates import ensure_python_date, ensure_python_time
 
 from excel_text._condition import Condition
 from excel_text._elapsed import elapsed_hours, elapsed_minutes, elapsed_seconds
-from excel_text._numbers import render_left, render_right
+from excel_text._numbers import render_characteristic, render_mantissa
 
 
 @dataclass
@@ -211,36 +211,69 @@ class NumberToken(FormatStringToken):
 
     >>> NumberToken(text="$#,##0.00", decimal_char=".", thousands_char=",").render(1234.5678)
     '$1,234.57'
+
+    >>> NumberToken(text='0.00E+00', decimal_char='.', thousands_char=' ').render(12200000)
+    '1.22E+07'
+
+    >>> NumberToken(text='00.00%', decimal_char='.', thousands_char=' ').render(0.2859)
+    '28.59%'
+
+    >>> NumberToken(text='0%', decimal_char='.', thousands_char=' ').render(0.2859)
+    '29%'
     """
 
     decimal_char: str
     thousands_char: str
 
+    _characteristic: str = field(init=False, repr=False, compare=False)
+    _mantissa: str = field(init=False, repr=False, compare=False)
+    _exponent: str = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        dec = re.escape(self.decimal_char)
+        match = re.fullmatch(
+            rf"(?P<characteristic>[^eE+{dec}]*)({dec}(?P<mantissa>[^eE+{dec}]*))?([eE]\+(?P<exponent>[^eE+{dec}]*))?",
+            self.text,
+        )
+        if not match:
+            raise ValueError(f"Invalid number format: {self.text}")
+
+        groups = match.groupdict()
+        self._characteristic = groups["characteristic"]
+        self._mantissa = groups["mantissa"]
+        self._exponent = groups["exponent"]
+
     def render(self, value: Any) -> str:
         if not isinstance(value, (float, int)):
             raise ValueError("Value is not numeric.")
 
-        parts = self.text.split(self.decimal_char)
         if "%" in self.text:
             value *= 100
 
-        if len(parts) == 1:
-            return render_left(
-                parts[0][::-1],
+        exponent = ""
+        if self._exponent:
+            e = len(str(int(value))) - 1
+            exponent = "E+" + render_characteristic(self._exponent, "", str(e))
+            value /= 10**e
+
+        if self._characteristic and not self._mantissa:
+            characteristic = render_characteristic(
+                self._characteristic,
                 self.thousands_char,
-                str(int(round(value)))[::-1],
+                str(int(round(value))),
             )
-        else:
-            left = render_left(
-                parts[0][::-1],
-                self.thousands_char,
-                str(int(value))[::-1],
-            )
-            right = render_right(
-                parts[1],
-                str(abs(value) % 1)[2:],
-            )
-            return f"{left}{self.decimal_char}{right}"
+            return f"{characteristic}{exponent}"
+
+        characteristic = render_characteristic(
+            self._characteristic,
+            self.thousands_char,
+            str(int(value)),
+        )
+        mantissa = render_mantissa(
+            self._mantissa,
+            str(abs(value) % 1)[2:],
+        )
+        return f"{characteristic}{self.decimal_char}{mantissa}{exponent}"
 
 
 @dataclass

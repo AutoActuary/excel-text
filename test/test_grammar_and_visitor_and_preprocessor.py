@@ -568,6 +568,12 @@ class TestGrammar(unittest.TestCase):
             tokenize("hh:hh:hh am/pm", ".", ","),
         )
 
+    def test_scientific_notation(self) -> None:
+        self.assertEqual(
+            [NumberToken(text="0.00E+00", decimal_char=".", thousands_char=" ")],
+            tokenize("0.00E+00", ".", " "),
+        )
+
 
 if __name__ == "__main__":
     unittest.main(
