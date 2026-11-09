@@ -17,8 +17,7 @@ class FormatStringParser:
         re_decimal_char = re.escape(self.decimal_char)
         re_thousands_char = re.escape(self.thousands_char)
 
-        rules = dedent(
-            rf"""
+        rules = dedent(rf"""
             format_string = if_binary / if_ternary / expressions
             
             expression = double_quoted / single_quoted / ampm / elapsed / datetime / colon / at / number / other
@@ -51,8 +50,7 @@ class FormatStringParser:
             
             number = ~r"[#0?%{re_decimal_char}{re_thousands_char}][^bdeghmnsy;@\[\]]*"
             other = ~r"[^;]+?"
-            """
-        )
+            """)
 
         return Grammar(rules=rules)
 

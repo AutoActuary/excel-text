@@ -31,7 +31,7 @@ def elapsed_seconds(value: AnyDateType) -> float:
 
 
 def elapsed_minutes(
-    value: Union[datetime.datetime, datetime.date, datetime.time]
+    value: Union[datetime.datetime, datetime.date, datetime.time],
 ) -> float:
     """
     Convert the given datetime to the number of minutes elapsed since "date zero".
@@ -48,7 +48,7 @@ def elapsed_minutes(
 
 
 def elapsed_hours(
-    value: Union[datetime.datetime, datetime.date, datetime.time]
+    value: Union[datetime.datetime, datetime.date, datetime.time],
 ) -> float:
     """
     Convert the given datetime to the number of hours elapsed since "date zero".
