@@ -19,7 +19,7 @@ jobs:
           PIP_EXTRA_INDEX_URL: https://aa:${{ secrets.PYPI_PASSWORD }}@pypi.autoactuary.com/simple
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -c ci-constraints.txt . -r mypy-requirements.txt
+          python -m pip install . -r mypy-requirements.txt
 
       - name: Run MyPy
         run: |

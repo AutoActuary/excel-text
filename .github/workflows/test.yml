@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -c ci-constraints.txt -r test-requirements.txt . "parsimonious==${{ matrix.parsimonious-version }}"
+          python -m pip install -r test-requirements.txt . "parsimonious==${{ matrix.parsimonious-version }}"
       - name: Test
         run: |
           python -m unittest
