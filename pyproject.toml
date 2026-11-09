@@ -8,7 +8,7 @@ description="Python implementation of Excel's `text` function"
 dynamic = ["version"]
 dependencies = [
     "excel-dates>=1.0,==1.*",
-    "parsimonious==0.10.*",
+    "parsimonious>=0.10,<0.12",
 ]
 authors = [
     {name = "Bart-Jan Hulsman", email = "hulsmanbj@gmail.com"},

@@ -3,4 +3,4 @@
 # See https://stackoverflow.com/questions/65122957/resolving-new-pip-backtracking-runtime-issue
 
 excel-dates===1.0.3
-parsimonious==0.10.0
+# Parsimonious versions are selected by the test workflow matrix.
