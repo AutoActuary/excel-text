@@ -9,12 +9,11 @@ on:
 jobs:
   test:
     timeout-minutes: 20
-    # Python 3.8 is unavailable on newer Ubuntu runner images.
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.11']
+        python-version: ['3.11', '3.13']
         parsimonious-version: ['0.10.0', '0.11.0']
     steps:
       - uses: actions/checkout@v3
