@@ -7,7 +7,7 @@ from excel_text._visitor import FormatStringVisitor
 
 
 def get_text_function(
-    config: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None,
 ) -> Callable[[Any, str], Union[str, ExcelError]]:
     """
     Create a text function.

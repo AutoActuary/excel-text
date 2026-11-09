@@ -23,7 +23,6 @@ from excel_text._tokens import (
     TernaryConditionalToken,
 )
 
-
 T = TypeVar("T")
 
 
