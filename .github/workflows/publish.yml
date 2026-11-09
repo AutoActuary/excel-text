@@ -9,24 +9,29 @@ jobs:
     timeout-minutes: 20
 
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/excel-text/
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel twine
+          pip install setuptools wheel
 
-      - name: Build and publish
-        env:
-          TWINE_USERNAME: ${{ secrets.PUBLIC_PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PUBLIC_PYPI_PASSWORD }}
+      - name: Build wheel
         run: |
           pip wheel --no-deps --wheel-dir dist .
-          twine upload --verbose dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
